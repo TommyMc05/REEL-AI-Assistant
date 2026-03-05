@@ -14,7 +14,7 @@ chatButton.style.zIndex = "9999";
 document.body.appendChild(chatButton);
 
 const chatBox = document.createElement("iframe");
-chatBox.src = "https://flask-ai-assistant-aqpi.onrender.com/";
+chatBox.src = "https://flask-ai-assistant-aqpi.onrender.com/widget";
 chatBox.style.position = "fixed";
 chatBox.style.bottom = "90px";
 chatBox.style.right = "20px";
