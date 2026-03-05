@@ -1,0 +1,30 @@
+Business Name: BrightSmile Dental Clinic
+
+Location:
+Manchester, UK
+
+Opening Hours:
+Monday - Friday: 9am - 6pm
+Saturday: 9am - 1pm
+Sunday: Closed
+
+Services:
+General dentistry
+Teeth cleaning
+Fillings
+Teeth whitening
+Emergency dental appointments
+
+Pricing:
+Check-up: £60
+Teeth cleaning: £85
+Teeth whitening: from £250
+
+Booking:
+Appointments can be booked by phone or through the website.
+
+Emergency Appointments:
+Same-day emergency appointments may be available depending on availability.
+
+Contact Phone:
+0161 555 4421
