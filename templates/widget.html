@@ -72,13 +72,22 @@ border:none;
 <div id="chat-button">💬</div>
 
 <div id="chat-box">
-<iframe src="/"></iframe>
+<iframe id="chat-frame"></iframe>
 </div>
 
 <script>
 
+const BUSINESS = "{{ business }}";
+
 const button = document.getElementById("chat-button");
 const chat = document.getElementById("chat-box");
+const frame = document.getElementById("chat-frame");
+
+/* load chat interface */
+
+frame.src = "/?business=" + BUSINESS;
+
+/* toggle chat */
 
 button.onclick = function(){
 
