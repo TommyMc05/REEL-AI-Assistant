@@ -82,6 +82,9 @@ def debug():
         "FILES_IN_BUSINESS_FOLDER": safe_listdir(BUSINESS_FOLDER),
     })
 
+@app.route("/widget")
+def widget():
+    return render_template("widget.html")
 
 # --------------------------------------------------
 # WIDGET PAGE (NEW)
