@@ -1,43 +1,73 @@
 import os
+import smtplib
+from email.mime.text import MIMEText
+
 from flask import Flask, request, jsonify, render_template
 from dotenv import load_dotenv
 from openai import OpenAI
 
-# Load environment variables
+
+# --------------------------------------------------
+# LOAD ENV VARIABLES
+# --------------------------------------------------
+
 load_dotenv()
 
-# OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+EMAIL_USER = os.getenv("EMAIL_USER")
+EMAIL_PASS = os.getenv("EMAIL_PASS")
+
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 app = Flask(__name__)
 
-# Paths
+
+# --------------------------------------------------
+# PATHS
+# --------------------------------------------------
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 BUSINESS_FOLDER = os.path.join(BASE_DIR, "business_profiles")
 
 
-def safe_listdir(path: str):
+# --------------------------------------------------
+# SAFE DIRECTORY LIST
+# --------------------------------------------------
+
+def safe_listdir(path):
     try:
         return sorted(os.listdir(path))
     except Exception as e:
         return [f"<<cannot list dir: {e}>>"]
 
 
-def find_profile_path(business_name: str):
+# --------------------------------------------------
+# FIND BUSINESS PROFILE FILE
+# --------------------------------------------------
+
+def find_profile_path(business_name):
+
     exact = os.path.join(BUSINESS_FOLDER, f"{business_name}.txt")
+
     if os.path.exists(exact):
         return exact
 
     target = f"{business_name}.txt".lower()
 
     for f in safe_listdir(BUSINESS_FOLDER):
+
         if isinstance(f, str) and f.lower() == target:
             return os.path.join(BUSINESS_FOLDER, f)
 
     return None
 
 
-def load_business_profile(business_name: str):
+# --------------------------------------------------
+# LOAD BUSINESS PROFILE
+# --------------------------------------------------
+
+def load_business_profile(business_name):
+
     path = find_profile_path(business_name)
 
     if not path:
@@ -47,7 +77,11 @@ def load_business_profile(business_name: str):
         return file.read(), path
 
 
-def extract_business_display_name(profile_text: str, fallback: str):
+# --------------------------------------------------
+# EXTRACT BUSINESS DISPLAY NAME
+# --------------------------------------------------
+
+def extract_business_display_name(profile_text, fallback):
 
     if not profile_text:
         return fallback
@@ -70,21 +104,63 @@ def extract_business_display_name(profile_text: str, fallback: str):
 
 
 # --------------------------------------------------
+# EMAIL LEAD NOTIFICATION
+# --------------------------------------------------
+
+def send_lead_email(message_text):
+
+    to_email = EMAIL_USER
+
+    subject = "New Lead From AI Assistant"
+
+    body = f"""
+New lead captured by AI assistant.
+
+Customer message:
+
+{message_text}
+"""
+
+    msg = MIMEText(body)
+
+    msg["Subject"] = subject
+    msg["From"] = EMAIL_USER
+    msg["To"] = to_email
+
+    try:
+
+        server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+
+        server.login(EMAIL_USER, EMAIL_PASS)
+
+        server.sendmail(EMAIL_USER, to_email, msg.as_string())
+
+        server.quit()
+
+        print("Lead email sent")
+
+    except Exception as e:
+
+        print("Email error:", e)
+
+
+# --------------------------------------------------
 # DEBUG ROUTE
 # --------------------------------------------------
 
 @app.route("/debug")
 def debug():
+
     return jsonify({
         "BASE_DIR": BASE_DIR,
         "BUSINESS_FOLDER": BUSINESS_FOLDER,
         "BUSINESS_FOLDER_EXISTS": os.path.exists(BUSINESS_FOLDER),
-        "FILES_IN_BUSINESS_FOLDER": safe_listdir(BUSINESS_FOLDER),
+        "FILES_IN_BUSINESS_FOLDER": safe_listdir(BUSINESS_FOLDER)
     })
 
 
 # --------------------------------------------------
-# WIDGET PAGE (NEW)
+# WIDGET PAGE
 # --------------------------------------------------
 
 @app.route("/widget")
@@ -112,9 +188,7 @@ def home():
 <!DOCTYPE html>
 <html>
 <head>
-
 <title>{display_name} Assistant</title>
-
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -122,45 +196,25 @@ def home():
 body {{
 margin:0;
 font-family:Arial;
-
-background-image:url("https://images.unsplash.com/photo-1617489024827-5f7f05e4009a?auto=format&fit=crop&w=1920&q=80");
-background-size:cover;
-background-position:center;
-
+background:#f2f2f2;
 height:100vh;
-
 display:flex;
 align-items:center;
 justify-content:center;
 }}
 
-body::before {{
-content:"";
-position:absolute;
-inset:0;
-background:rgba(0,0,0,0.55);
-}}
-
 .card {{
-position:relative;
-
-width:440px;
-max-width:92%;
-
-background:rgba(255,255,255,0.95);
-
-border-radius:16px;
-
-box-shadow:0 15px 40px rgba(0,0,0,0.4);
-
+width:420px;
+background:white;
+border-radius:14px;
+box-shadow:0 15px 40px rgba(0,0,0,0.2);
 display:flex;
 flex-direction:column;
-
 overflow:hidden;
 }}
 
 .header {{
-padding:18px;
+padding:16px;
 border-bottom:1px solid #eee;
 text-align:center;
 }}
@@ -170,17 +224,10 @@ font-size:18px;
 font-weight:700;
 }}
 
-.subtitle {{
-font-size:13px;
-color:#666;
-margin-top:4px;
-}}
-
 .chat {{
 height:380px;
 overflow:auto;
 padding:15px;
-background:linear-gradient(#fff,#fbfbfd);
 }}
 
 .row {{
@@ -197,20 +244,15 @@ padding:10px 12px;
 border-radius:14px;
 max-width:75%;
 font-size:14px;
-line-height:1.35;
-white-space:pre-wrap;
 }}
 
 .you .bubble {{
 background:#1f6feb;
 color:white;
-border-bottom-right-radius:6px;
 }}
 
 .ai .bubble {{
 background:#f1f3f7;
-color:#111;
-border-bottom-left-radius:6px;
 }}
 
 .composer {{
@@ -225,7 +267,6 @@ flex:1;
 padding:10px;
 border-radius:10px;
 border:1px solid #ddd;
-outline:none;
 }}
 
 button {{
@@ -235,19 +276,9 @@ border:none;
 padding:10px 14px;
 border-radius:10px;
 cursor:pointer;
-font-weight:700;
-}}
-
-.footer {{
-padding:10px 14px 14px;
-font-size:12px;
-color:#666;
-display:flex;
-justify-content:space-between;
 }}
 
 </style>
-
 </head>
 
 <body>
@@ -256,7 +287,6 @@ justify-content:space-between;
 
 <div class="header">
 <div class="title">{display_name} Assistant</div>
-<div class="subtitle">Ask about bookings, prices, coaching & opening hours</div>
 </div>
 
 <div class="chat" id="chat"></div>
@@ -276,7 +306,6 @@ const input = document.getElementById("message");
 const BUSINESS_NAME = "{business_name}";
 
 function addBubble(text,who){{
-
 const row=document.createElement("div");
 row.className="row "+who;
 
@@ -285,9 +314,7 @@ bubble.className="bubble";
 bubble.textContent=text;
 
 row.appendChild(bubble);
-
 chat.appendChild(row);
-
 chat.scrollTop=chat.scrollHeight;
 }}
 
@@ -319,7 +346,7 @@ input.addEventListener("keydown",e=>{{
 if(e.key==="Enter") sendMessage();
 }});
 
-addBubble("Hi! I'm the {display_name} assistant. Ask me about bookings, prices, coaching, or opening hours.","ai");
+addBubble("Hi! I'm the {display_name} assistant. Ask me anything about the business.","ai");
 
 </script>
 
@@ -338,7 +365,6 @@ def chat():
     data = request.json or {}
 
     user_message = (data.get("message") or "").strip()
-
     business_name = (data.get("business") or "").strip()
 
     if not user_message or not business_name:
@@ -355,6 +381,29 @@ def chat():
             "reply": "Business information file not found."
         }), 404
 
+
+    # --------------------------------------------------
+    # LEAD DETECTION
+    # --------------------------------------------------
+
+    lead_keywords = [
+        "book",
+        "appointment",
+        "call",
+        "contact",
+        "quote",
+        "price",
+        "emergency"
+    ]
+
+    if any(word in user_message.lower() for word in lead_keywords):
+
+        send_lead_email(user_message)
+
+
+    # --------------------------------------------------
+    # AI RESPONSE
+    # --------------------------------------------------
 
     system_prompt = f"""
 You are a helpful AI assistant for a business.
@@ -389,6 +438,8 @@ Rules:
     })
 
 
+# --------------------------------------------------
+# RUN SERVER
 # --------------------------------------------------
 
 if __name__ == "__main__":
