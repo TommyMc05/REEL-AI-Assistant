@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>AI Assistant Widget</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+}
+
+/* CHAT BUTTON */
+
+#chat-button{
+position:fixed;
+bottom:20px;
+right:20px;
+width:60px;
+height:60px;
+border-radius:50%;
+background:black;
+color:white;
+font-size:28px;
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+cursor:pointer;
+
+box-shadow:0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* CHAT WINDOW */
+
+#chat-box{
+position:fixed;
+bottom:90px;
+right:20px;
+
+width:400px;
+height:520px;
+
+background:white;
+
+border-radius:10px;
+border:1px solid #ccc;
+
+display:none;
+
+overflow:hidden;
+
+box-shadow:0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* IFRAME */
+
+iframe{
+width:100%;
+height:100%;
+border:none;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="chat-button">💬</div>
+
+<div id="chat-box">
+<iframe src="/"></iframe>
+</div>
+
+<script>
+
+const button = document.getElementById("chat-button");
+const chat = document.getElementById("chat-box");
+
+button.onclick = function(){
+
+if(chat.style.display === "none" || chat.style.display === ""){
+chat.style.display = "block";
+}else{
+chat.style.display = "none";
+}
+
+}
+
+</script>
+
+</body>
+</html>

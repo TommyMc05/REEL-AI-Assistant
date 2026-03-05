@@ -1,9 +1,9 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from dotenv import load_dotenv
 from openai import OpenAI
 
-# Load .env
+# Load environment variables
 load_dotenv()
 
 # OpenAI client
@@ -11,7 +11,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 app = Flask(__name__)
 
-# Absolute paths so it works no matter how you launch it
+# Paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 BUSINESS_FOLDER = os.path.join(BASE_DIR, "business_profiles")
 
@@ -24,16 +24,12 @@ def safe_listdir(path: str):
 
 
 def find_profile_path(business_name: str):
-    """
-    Find business profile using:
-    1) exact match: business_name.txt
-    2) case-insensitive match: BUSINESS_NAME.txt etc.
-    """
     exact = os.path.join(BUSINESS_FOLDER, f"{business_name}.txt")
     if os.path.exists(exact):
         return exact
 
     target = f"{business_name}.txt".lower()
+
     for f in safe_listdir(BUSINESS_FOLDER):
         if isinstance(f, str) and f.lower() == target:
             return os.path.join(BUSINESS_FOLDER, f)
@@ -43,6 +39,7 @@ def find_profile_path(business_name: str):
 
 def load_business_profile(business_name: str):
     path = find_profile_path(business_name)
+
     if not path:
         return None, None
 
@@ -51,34 +48,30 @@ def load_business_profile(business_name: str):
 
 
 def extract_business_display_name(profile_text: str, fallback: str):
-    """
-    Tries to pull a human-friendly business name from the profile file.
-    Looks for lines like:
-      BUSINESS NAME
-      Elite Padel Club
-    or:
-      Business Name: Elite Padel Club
-    """
+
     if not profile_text:
         return fallback
 
     lines = [l.strip() for l in profile_text.splitlines() if l.strip()]
+
     for i, line in enumerate(lines):
+
         low = line.lower()
 
-        # Format: Business Name: Elite Padel Club
         if low.startswith("business name:"):
             return line.split(":", 1)[1].strip() or fallback
 
-        # Format:
-        # BUSINESS NAME
-        # Elite Padel Club
         if low in ("business name", "business name/brand", "business"):
+
             if i + 1 < len(lines):
                 return lines[i + 1].strip() or fallback
 
     return fallback
 
+
+# --------------------------------------------------
+# DEBUG ROUTE
+# --------------------------------------------------
 
 @app.route("/debug")
 def debug():
@@ -90,170 +83,169 @@ def debug():
     })
 
 
+# --------------------------------------------------
+# WIDGET PAGE (NEW)
+# --------------------------------------------------
+
+@app.route("/widget")
+def widget():
+    return render_template("widget.html")
+
+
+# --------------------------------------------------
+# MAIN PAGE
+# --------------------------------------------------
+
 @app.route("/")
 def home():
-    # Padel background + attractive chat UI + business name in header
-    # (Business is currently set to padel_club for this page; can be upgraded to dynamic later.)
-    business_name = "padel_club"
-    profile_text, _ = load_business_profile(business_name)
-    display_name = extract_business_display_name(profile_text, "Elite Padel Club")
 
-    # Note: background image is from Unsplash (hotlinked)
+    business_name = "padel_club"
+
+    profile_text, _ = load_business_profile(business_name)
+
+    display_name = extract_business_display_name(
+        profile_text,
+        "Elite Padel Club"
+    )
+
     return f"""
 <!DOCTYPE html>
 <html>
 <head>
+
 <title>{display_name} Assistant</title>
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-  body {{
-      margin:0;
-      font-family:Arial, sans-serif;
 
-      background-image: url("https://images.unsplash.com/photo-1617489024827-5f7f05e4009a?auto=format&fit=crop&w=1920&q=80");
-      background-size: cover;
-      background-position: center;
-      height:100vh;
+body {{
+margin:0;
+font-family:Arial;
 
-      display:flex;
-      align-items:center;
-      justify-content:center;
-  }}
+background-image:url("https://images.unsplash.com/photo-1617489024827-5f7f05e4009a?auto=format&fit=crop&w=1920&q=80");
+background-size:cover;
+background-position:center;
 
-  /* dark overlay */
-  body::before {{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:rgba(0,0,0,0.55);
-  }}
+height:100vh;
 
-  /* chat container */
-  .card {{
-      position:relative;
-      width:440px;
-      max-width:92%;
+display:flex;
+align-items:center;
+justify-content:center;
+}}
 
-      background:rgba(255,255,255,0.95);
-      backdrop-filter: blur(8px);
+body::before {{
+content:"";
+position:absolute;
+inset:0;
+background:rgba(0,0,0,0.55);
+}}
 
-      border-radius:16px;
-      box-shadow:0 15px 40px rgba(0,0,0,0.4);
+.card {{
+position:relative;
 
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
-  }}
+width:440px;
+max-width:92%;
 
-  /* header */
-  .header {{
-      padding:18px;
-      border-bottom:1px solid #eee;
-      text-align:center;
-  }}
+background:rgba(255,255,255,0.95);
 
-  .title {{
-      font-size:18px;
-      font-weight:700;
-  }}
+border-radius:16px;
 
-  .subtitle {{
-      font-size:13px;
-      color:#666;
-      margin-top:4px;
-  }}
+box-shadow:0 15px 40px rgba(0,0,0,0.4);
 
-  /* chat area */
-  .chat {{
-      height:380px;
-      overflow:auto;
-      padding:15px;
-      background: linear-gradient(#fff, #fbfbfd);
-  }}
+display:flex;
+flex-direction:column;
 
-  /* messages */
-  .row {{
-      margin:8px 0;
-      display:flex;
-  }}
+overflow:hidden;
+}}
 
-  .you {{
-      justify-content:flex-end;
-  }}
+.header {{
+padding:18px;
+border-bottom:1px solid #eee;
+text-align:center;
+}}
 
-  .bubble {{
-      padding:10px 12px;
-      border-radius:14px;
-      max-width:75%;
-      font-size:14px;
-      line-height:1.35;
-      white-space: pre-wrap;
-  }}
+.title {{
+font-size:18px;
+font-weight:700;
+}}
 
-  .you .bubble {{
-      background:#1f6feb;
-      color:white;
-      border-bottom-right-radius:6px;
-  }}
+.subtitle {{
+font-size:13px;
+color:#666;
+margin-top:4px;
+}}
 
-  .ai .bubble {{
-      background:#f1f3f7;
-      color:#111;
-      border-bottom-left-radius:6px;
-  }}
+.chat {{
+height:380px;
+overflow:auto;
+padding:15px;
+background:linear-gradient(#fff,#fbfbfd);
+}}
 
-  /* input area */
-  .composer {{
-      border-top:1px solid #eee;
-      padding:12px;
-      display:flex;
-      gap:8px;
-  }}
+.row {{
+margin:8px 0;
+display:flex;
+}}
 
-  input {{
-      flex:1;
-      padding:10px;
-      border-radius:10px;
-      border:1px solid #ddd;
-      outline:none;
-  }}
+.you {{
+justify-content:flex-end;
+}}
 
-  button {{
-      background:#111;
-      color:white;
-      border:none;
-      padding:10px 14px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:700;
-  }}
+.bubble {{
+padding:10px 12px;
+border-radius:14px;
+max-width:75%;
+font-size:14px;
+line-height:1.35;
+white-space:pre-wrap;
+}}
 
-  button:disabled {{
-      opacity:0.65;
-      cursor:not-allowed;
-  }}
+.you .bubble {{
+background:#1f6feb;
+color:white;
+border-bottom-right-radius:6px;
+}}
 
-  .footer {{
-      padding:10px 14px 14px;
-      font-size:12px;
-      color:#666;
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-  }}
+.ai .bubble {{
+background:#f1f3f7;
+color:#111;
+border-bottom-left-radius:6px;
+}}
 
-  .pill {{
-      background:#f1f3f7;
-      padding:6px 10px;
-      border-radius:999px;
-  }}
+.composer {{
+border-top:1px solid #eee;
+padding:12px;
+display:flex;
+gap:8px;
+}}
 
-  a {{
-      color:#1f6feb;
-      text-decoration:none;
-  }}
+input {{
+flex:1;
+padding:10px;
+border-radius:10px;
+border:1px solid #ddd;
+outline:none;
+}}
+
+button {{
+background:#111;
+color:white;
+border:none;
+padding:10px 14px;
+border-radius:10px;
+cursor:pointer;
+font-weight:700;
+}}
+
+.footer {{
+padding:10px 14px 14px;
+font-size:12px;
+color:#666;
+display:flex;
+justify-content:space-between;
+}}
+
 </style>
 
 </head>
@@ -262,80 +254,73 @@ def home():
 
 <div class="card">
 
-  <div class="header">
-    <div class="title">{display_name} Assistant</div>
-    <div class="subtitle">Ask about bookings, prices, coaching & opening hours</div>
-  </div>
+<div class="header">
+<div class="title">{display_name} Assistant</div>
+<div class="subtitle">Ask about bookings, prices, coaching & opening hours</div>
+</div>
 
-  <div class="chat" id="chat"></div>
+<div class="chat" id="chat"></div>
 
-  <div class="composer">
-    <input id="message" placeholder="Ask a question...">
-    <button id="sendBtn" onclick="sendMessage()">Send</button>
-  </div>
-
-  <div class="footer">
-    <div class="pill">Tip: Press Enter to send</div>
-    <div class="pill">Debug: <a href="/debug" target="_blank">/debug</a></div>
-  </div>
+<div class="composer">
+<input id="message" placeholder="Ask a question...">
+<button onclick="sendMessage()">Send</button>
+</div>
 
 </div>
 
 <script>
-  const chat = document.getElementById("chat");
-  const input = document.getElementById("message");
-  const btn = document.getElementById("sendBtn");
 
-  // Change this to switch businesses for the chat UI:
-  const BUSINESS_NAME = "{business_name}";
+const chat = document.getElementById("chat");
+const input = document.getElementById("message");
 
-  function addBubble(text, who){{
-      const row = document.createElement("div");
-      row.className = "row " + who;
+const BUSINESS_NAME = "{business_name}";
 
-      const bubble = document.createElement("div");
-      bubble.className = "bubble";
-      bubble.textContent = text;
+function addBubble(text,who){{
 
-      row.appendChild(bubble);
-      chat.appendChild(row);
-      chat.scrollTop = chat.scrollHeight;
-  }}
+const row=document.createElement("div");
+row.className="row "+who;
 
-  async function sendMessage(){{
-      const message = input.value.trim();
-      if(!message) return;
+const bubble=document.createElement("div");
+bubble.className="bubble";
+bubble.textContent=text;
 
-      addBubble(message, "you");
-      input.value = "";
+row.appendChild(bubble);
 
-      btn.disabled = true;
+chat.appendChild(row);
 
-      try {{
-          const res = await fetch("/chat", {{
-              method: "POST",
-              headers: {{ "Content-Type": "application/json" }},
-              body: JSON.stringify({{
-                  business: BUSINESS_NAME,
-                  message: message
-              }})
-          }});
+chat.scrollTop=chat.scrollHeight;
+}}
 
-          const data = await res.json();
-          addBubble(data.reply || "Sorry — I couldn't answer that.", "ai");
-      }} catch (e) {{
-          addBubble("Connection error. Please try again.", "ai");
-      }} finally {{
-          btn.disabled = false;
-          input.focus();
-      }}
-  }}
+async function sendMessage(){{
 
-  input.addEventListener("keydown", (e) => {{
-      if (e.key === "Enter") sendMessage();
-  }});
+const message=input.value.trim();
 
-  addBubble("Hi! I'm the {display_name} assistant. Ask me about bookings, prices, coaching, or opening hours.", "ai");
+if(!message) return;
+
+addBubble(message,"you");
+
+input.value="";
+
+const res=await fetch("/chat",{{
+method:"POST",
+headers:{{"Content-Type":"application/json"}},
+body:JSON.stringify({{
+business:BUSINESS_NAME,
+message:message
+}})
+}});
+
+const data=await res.json();
+
+addBubble(data.reply,"ai");
+}}
+
+input.addEventListener("keydown",e=>{{
+if(e.key==="Enter") sendMessage();
+}});
+
+addBubble("Hi! I'm the {display_name} assistant. Ask me about bookings, prices, coaching, or opening hours.","ai");
+
 </script>
 
 </body>
@@ -343,57 +328,68 @@ def home():
 """
 
 
+# --------------------------------------------------
+# CHAT API
+# --------------------------------------------------
+
 @app.route("/chat", methods=["POST"])
 def chat():
+
     data = request.json or {}
+
     user_message = (data.get("message") or "").strip()
+
     business_name = (data.get("business") or "").strip()
 
     if not user_message or not business_name:
-        return jsonify({"reply": "Missing message or business name."}), 400
+
+        return jsonify({
+            "reply": "Missing message or business name."
+        }), 400
 
     business_profile, profile_path = load_business_profile(business_name)
 
     if not business_profile:
+
         return jsonify({
-            "reply": "Business information file not found.",
-            "diagnostic": {
-                "business_received": business_name,
-                "expected_exact_path": os.path.join(BUSINESS_FOLDER, f"{business_name}.txt"),
-                "business_folder": BUSINESS_FOLDER,
-                "business_folder_exists": os.path.exists(BUSINESS_FOLDER),
-                "files_seen": safe_listdir(BUSINESS_FOLDER),
-                "tip": "Make sure the folder is named business_profiles and contains the correct .txt file."
-            }
+            "reply": "Business information file not found."
         }), 404
+
 
     system_prompt = f"""
 You are a helpful AI assistant for a business.
 
-Use ONLY the information below to answer questions. Do not guess or invent.
+Use ONLY the information below to answer questions.
 
 BUSINESS INFORMATION:
 {business_profile}
 
 Rules:
-- Keep answers short and clear.
-- If the answer is not in the business information, say:
-  "Please contact the business directly for that information."
+- Keep answers short
+- Do not invent information
+- If not in the info say:
+  "Please contact the business directly."
 """
+
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message}
+            {"role":"system","content":system_prompt},
+            {"role":"user","content":user_message}
         ],
         temperature=0.2
     )
 
     reply = response.choices[0].message.content.strip()
-    return jsonify({"reply": reply, "profile_path_used": profile_path})
 
+    return jsonify({
+        "reply": reply,
+        "profile_path_used": profile_path
+    })
+
+
+# --------------------------------------------------
 
 if __name__ == "__main__":
-    # Local dev only
     app.run(host="127.0.0.1", port=5000, debug=False)
