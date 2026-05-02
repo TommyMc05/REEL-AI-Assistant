@@ -1,0 +1,35 @@
+{
+  "business_name": "ABC Roofing",
+  "email": "m.fullerty@outlook.com",
+  "description": "Professional roofing services for repairs, replacements, and inspections across the local area.",
+  "contact_prompt": "one of our roofers",
+  "pricing": {
+    "jobs": {
+      "roof repair": {
+        "keywords": ["leak", "leaking roof", "roof leak", "damp", "water coming in", "ceiling leak", "wet ceiling", "dripping ceiling"],
+        "price": "£150–£400",
+        "advice": "Place a bucket under any drips and try to keep the area dry until we can get someone out."
+      },
+      "tile replacement": {
+        "keywords": ["tile", "tiles", "missing tile", "broken tile", "cracked tile", "slipped tile"],
+        "price": "£100–£250",
+        "advice": "Avoid going on the roof yourself — loose tiles can be dangerous."
+      },
+      "gutter repair": {
+        "keywords": ["gutter", "guttering", "blocked gutter", "overflowing gutter", "leaking gutter", "fascia"],
+        "price": "£80–£200",
+        "advice": "Blocked gutters can cause damp and water damage — best to get it sorted before winter."
+      },
+      "flat roof repair": {
+        "keywords": ["flat roof", "flat roofing", "felt roof", "rubber roof", "ponding"],
+        "price": "£200–£600",
+        "advice": "Check for any pooling water on the surface and clear any debris if it is safe to do so."
+      },
+      "full roof replacement": {
+        "keywords": ["new roof", "replace roof", "full roof", "reroof", "roof replacement"],
+        "price": "£3,000–£8,000",
+        "advice": "We recommend a free inspection first so we can give you an accurate quote."
+      }
+    }
+  }
+}
