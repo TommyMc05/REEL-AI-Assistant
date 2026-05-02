@@ -1,0 +1,25 @@
+{
+  "business_name": "ABC Plumbing",
+  "email": "jannine.thurston@hotmail.com",
+  "description": "Professional plumbing services for repairs, installations, and emergencies across the local area.",
+  "contact_prompt": "one of our plumbers",
+  "pricing": {
+    "jobs": {
+      "leak repair": {
+        "keywords": ["leak", "drip", "dripping", "water leak", "pipe leak"],
+        "price": "£80–£120",
+        "advice": "Try turning off the water supply to prevent further damage."
+      },
+      "boiler repair": {
+        "keywords": ["boiler", "heating", "no hot water", "radiator", "hot water"],
+        "price": "£90–£180",
+        "advice": "Check pressure levels and reset the boiler if needed."
+      },
+      "blocked drain": {
+        "keywords": ["blocked", "drain", "clogged", "slow drain", "sink"],
+        "price": "£60–£100",
+        "advice": "Avoid using chemical drain cleaners as they can damage pipes."
+      }
+    }
+  }
+}

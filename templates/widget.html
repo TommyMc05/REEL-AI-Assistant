@@ -1,104 +1,66 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-<title>AI Assistant Widget</title>
-
 <style>
-
-body{
-margin:0;
-font-family:Arial;
+#chat-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #007bff;
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 24px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
-/* CHAT BUTTON */
-
-#chat-button{
-position:fixed;
-bottom:20px;
-right:20px;
-width:60px;
-height:60px;
-border-radius:50%;
-background:black;
-color:white;
-font-size:28px;
-
-display:flex;
-align-items:center;
-justify-content:center;
-
-cursor:pointer;
-
-box-shadow:0 4px 10px rgba(0,0,0,0.3);
+#chat-frame {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 320px;
+    height: 420px;
+    border: none;
+    display: none;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
-
-/* CHAT WINDOW */
-
-#chat-box{
-position:fixed;
-bottom:90px;
-right:20px;
-
-width:400px;
-height:520px;
-
-background:white;
-
-border-radius:10px;
-border:1px solid #ccc;
-
-display:none;
-
-overflow:hidden;
-
-box-shadow:0 10px 30px rgba(0,0,0,0.3);
-}
-
-/* IFRAME */
-
-iframe{
-width:100%;
-height:100%;
-border:none;
-}
-
 </style>
-
 </head>
 
 <body>
 
-<div id="chat-button">💬</div>
+<div id="chat-button" onclick="toggleChat()">💬</div>
 
-<div id="chat-box">
 <iframe id="chat-frame"></iframe>
-</div>
 
 <script>
+// 🔥 GET BUSINESS ID FROM URL
+const businessId = new URLSearchParams(window.location.search).get("business");
 
-const BUSINESS = "{{ business }}";
+// 🔥 SET IFRAME SOURCE CORRECTLY
+const chatFrame = document.getElementById("chat-frame");
 
-const button = document.getElementById("chat-button");
-const chat = document.getElementById("chat-box");
-const frame = document.getElementById("chat-frame");
-
-/* load chat interface */
-
-frame.src = "/?business=" + BUSINESS;
-
-/* toggle chat */
-
-button.onclick = function(){
-
-if(chat.style.display === "none" || chat.style.display === ""){
-chat.style.display = "block";
-}else{
-chat.style.display = "none";
+if (businessId) {
+    chatFrame.src = `/chat-ui?business=${businessId}`;
+} else {
+    console.error("No business ID found in URL");
 }
 
+// 🔥 TOGGLE CHAT
+function toggleChat() {
+    if (chatFrame.style.display === "block") {
+        chatFrame.style.display = "none";
+    } else {
+        chatFrame.style.display = "block";
+    }
 }
-
 </script>
 
 </body>

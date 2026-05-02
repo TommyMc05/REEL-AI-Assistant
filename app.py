@@ -1,264 +1,442 @@
+from flask import Flask, request, jsonify, render_template
+import json
 import os
 import re
-import smtplib
-from datetime import datetime
-from email.mime.text import MIMEText
-
-from flask import Flask, request, jsonify, render_template
 from dotenv import load_dotenv
-from openai import OpenAI
-
-# --------------------------------------------------
-# LOAD ENV VARIABLES
-# --------------------------------------------------
 
 load_dotenv()
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-EMAIL_USER = os.getenv("EMAIL_USER")
-EMAIL_PASS = os.getenv("EMAIL_PASS")
-
-client = OpenAI(api_key=OPENAI_API_KEY)
+from openai import OpenAI
+from email_service import send_email
 
 app = Flask(__name__)
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# --------------------------------------------------
-# PATHS
-# --------------------------------------------------
+sessions = {}
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-BUSINESS_FOLDER = os.path.join(BASE_DIR, "business_profiles")
 
-# --------------------------------------------------
-# SIMPLE LEAD STATE
-# --------------------------------------------------
 
-LEAD_SENT = set()
-WAITING_FOR_CONTACT = set()
-
-# --------------------------------------------------
-# LOAD BUSINESS PROFILE
-# --------------------------------------------------
-
-def load_business_profile(business_name):
-
-    path = os.path.join(BUSINESS_FOLDER, f"{business_name}.txt")
-
+def load_business(business_id):
+    path = os.path.join(BASE_DIR, "business_profiles", f"{business_id}.json")
     if not os.path.exists(path):
         return None
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
 
-    with open(path, "r", encoding="utf-8") as f:
-        return f.read()
 
-# --------------------------------------------------
-# EXTRACT BUSINESS NAME
-# --------------------------------------------------
+def build_system_prompt(business):
+    lines = [f"You are a friendly assistant for {business['business_name']}."]
 
-def extract_business_display_name(profile_text, fallback):
+    if "description" in business:
+        lines.append(business["description"])
 
-    for line in profile_text.splitlines():
+    if "pricing" in business and "jobs" in business["pricing"]:
+        lines.append("\nServices and pricing:")
+        for job, details in business["pricing"]["jobs"].items():
+            lines.append(f"- {job.title()}: {details['price']}")
 
-        if line.lower().startswith("business name"):
-            return line.split(":",1)[1].strip()
+    if "services" in business:
+        lines.append("\nServices offered:")
+        for s in business["services"]:
+            lines.append(f"- {s}")
 
-    return fallback
+    lines.append(
+        "\nYou are a friendly, natural assistant — warm and conversational but always professional. "
+        "Never sound scripted or robotic. Use natural language like a real person would, not formal corporate phrases. "
+        "Keep replies concise and to the point. Show a bit of personality — be reassuring when customers have a problem. "
+        "If someone describes an issue you can help with, give them useful information and naturally ask if they'd like someone to get in touch."
+    )
 
-# --------------------------------------------------
-# SEND LEAD EMAIL
-# --------------------------------------------------
+    return "\n".join(lines)
 
-def send_lead_email(message):
 
+def detect_issue(message, business):
+    if "pricing" not in business or "jobs" not in business.get("pricing", {}):
+        return None
+
+    msg = message.lower()
+    for job, details in business["pricing"]["jobs"].items():
+        for keyword in details.get("keywords", []):
+            if keyword in msg:
+                return {
+                    "job": job,
+                    "price": details["price"],
+                    "advice": details.get("advice", "")
+                }
+    return None
+
+
+def extract_contact(message):
+    # Check for email first
+    email = re.findall(r"[\w\.-]+@[\w\.-]+", message)
+    if email:
+        return email[0]
+
+    # Strip formatting from phone numbers before matching
+    cleaned = re.sub(r"[\s\-\(\)\+]", "", message)
+    phone = re.findall(r"\b\d{10,13}\b", cleaned)
+    if phone:
+        return phone[0]
+
+    # AI fallback for anything regex misses
     try:
-
-        msg = MIMEText(message)
-
-        msg["Subject"] = "New Lead From AI Assistant"
-        msg["From"] = EMAIL_USER
-        msg["To"] = EMAIL_USER
-
-        server = smtplib.SMTP_SSL("smtp.gmail.com",465)
-        server.login(EMAIL_USER,EMAIL_PASS)
-        server.sendmail(EMAIL_USER,EMAIL_USER,msg.as_string())
-        server.quit()
-
-        print("Lead email sent")
-
-    except Exception as e:
-
-        print("Email error:",e)
-
-# --------------------------------------------------
-# HUMAN REQUEST DETECTION
-# --------------------------------------------------
-
-def wants_human(text):
-
-    triggers = [
-        "contact",
-        "call me",
-        "phone me",
-        "ring me",
-        "speak to",
-        "talk to",
-        "human",
-        "owner",
-        "manager",
-        "book",
-        "booking",
-        "appointment",
-        "schedule",
-        "quote",
-        "enquiry"
-    ]
-
-    t = text.lower()
-
-    return any(x in t for x in triggers)
-
-# --------------------------------------------------
-# CONTACT CHECK
-# --------------------------------------------------
-
-def looks_like_contact(text):
-
-    if re.search(r"[^\s]+@[^\s]+\.[^\s]+", text):
-        return True
-
-    digits = re.sub(r"\D","",text)
-
-    return len(digits) >= 9
-
-# --------------------------------------------------
-# HOME PAGE
-# --------------------------------------------------
-
-@app.route("/")
-def home():
-    return "AI assistant server running"
-
-# --------------------------------------------------
-# WIDGET PAGE
-# --------------------------------------------------
-
-@app.route("/widget")
-def widget():
-
-    business = request.args.get("business","padel_club")
-
-    return render_template("widget.html", business=business)
-
-# --------------------------------------------------
-# DEBUG ROUTE
-# --------------------------------------------------
-
-@app.route("/debug")
-def debug():
-
-    files = []
-
-    if os.path.exists(BUSINESS_FOLDER):
-        files = os.listdir(BUSINESS_FOLDER)
-
-    return jsonify({
-        "BUSINESS_FOLDER_EXISTS": os.path.exists(BUSINESS_FOLDER),
-        "FILES_IN_BUSINESS_FOLDER": files
-    })
-
-# --------------------------------------------------
-# CHAT API
-# --------------------------------------------------
-
-@app.route("/chat", methods=["POST"])
-def chat():
-
-    data = request.json or {}
-
-    user_message = (data.get("message") or "").strip()
-    business_name = (data.get("business") or "").strip()
-
-    session_id = data.get("session_id") or request.remote_addr
-
-    if not user_message or not business_name:
-
-        return jsonify({"reply":"Missing message or business name"}),400
-
-    business_profile = load_business_profile(business_name)
-
-    if not business_profile:
-
-        return jsonify({"reply":"Business profile not found"}),404
-
-    display_name = extract_business_display_name(business_profile,business_name)
-
-    # --------------------------------------------------
-    # LEAD CAPTURE
-    # --------------------------------------------------
-
-    if session_id in WAITING_FOR_CONTACT and session_id not in LEAD_SENT:
-
-        if not looks_like_contact(user_message):
-
-            return jsonify({
-                "reply":"Please send your email address or phone number so the business can contact you."
-            })
-
-        send_lead_email(
-            f"Business: {display_name}\nContact: {user_message}\nCustomer requested contact."
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Extract the phone number or email address from the message. Return only the phone number or email, nothing else. If none found, return NONE."},
+                {"role": "user", "content": message}
+            ],
+            max_tokens=50,
         )
+        result = response.choices[0].message.content.strip()
+        return None if result.upper() == "NONE" else result
+    except Exception:
+        return None
 
-        LEAD_SENT.add(session_id)
-        WAITING_FOR_CONTACT.discard(session_id)
 
-        return jsonify({
-            "reply":"Thanks — your contact details have been sent to the business."
-        })
+def extract_name(message):
+    # Try common patterns first
+    match = re.search(
+        r"(?:my name is|i'm|i am|it's|it is|call me)\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)",
+        message, re.IGNORECASE
+    )
+    if match:
+        return match.group(1).title()
 
-    if wants_human(user_message) and session_id not in LEAD_SENT:
+    # Short messages are likely just a name
+    words = message.strip().split()
+    if len(words) <= 3:
+        return message.strip().title()
 
-        WAITING_FOR_CONTACT.add(session_id)
+    # AI fallback for longer messages
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Extract the person's name from the message. Return only the name, nothing else."},
+                {"role": "user", "content": message}
+            ],
+            max_tokens=20,
+        )
+        return response.choices[0].message.content.strip().title()
+    except Exception:
+        return words[0].title()
 
-        return jsonify({
-            "reply":"Sure — what email address or phone number should the business use to contact you?"
-        })
 
-    # --------------------------------------------------
-    # AI RESPONSE
-    # --------------------------------------------------
+def is_yes(message):
+    return message.lower().strip() in {
+        "yes", "yeah", "yep", "ok", "okay", "sure",
+        "yes please", "go ahead", "please", "sounds good", "do it"
+    }
 
-    system_prompt = f"""
-You are an AI assistant for a business.
 
-BUSINESS INFORMATION:
-{business_profile}
+def user_wants_contact(message, last_bot_message=""):
+    try:
+        context = f'The assistant just said: "{last_bot_message}"\nThe user replied: "{message}"'
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Reply only YES or NO. Based on what the assistant said and the user's reply, is the user specifically agreeing to have someone from the business contact them or come to their address?"},
+                {"role": "user", "content": context}
+            ],
+            max_tokens=5,
+        )
+        return response.choices[0].message.content.strip().upper().startswith("YES")
+    except Exception:
+        return is_yes(message)
 
-Rules:
-- Use the business information
-- Keep responses short
-- If the answer is unknown say:
-'Please contact the business directly.'
-"""
+
+def get_first_followup(session, business):
+    """After detecting an issue, give immediate advice and ask the first follow-up question."""
+    system = f"""You are a helpful assistant for {business['business_name']}.
+A customer said: "{session['problem_description']}"
+This seems to be a {session['issue']['job']}.
+Immediate advice: {session['issue'].get('advice', '')}
+
+Write a short, friendly response that:
+1. Briefly gives the immediate advice in a natural way (one sentence)
+2. Asks ONE follow-up question to better understand the problem — e.g. where it is, how long it's been happening, or how bad it is.
+
+Keep it conversational and concise."""
 
     response = client.chat.completions.create(
-
         model="gpt-4o-mini",
+        messages=[{"role": "system", "content": system}],
+        max_tokens=120,
+    )
+    return response.choices[0].message.content.strip()
 
-        messages=[
-            {"role":"system","content":system_prompt},
-            {"role":"user","content":user_message}
-        ],
 
-        temperature=0.2
+def process_followup(message, session, business):
+    """
+    Process a follow-up answer. Returns (reply, is_ready).
+    is_ready=True means we have enough info to offer contact.
+    """
+    answers = session.setdefault("followup_answers", [])
+    answers.append(message)
+
+    # Build full problem description from everything gathered
+    full_desc = session["problem_description"] + " — " + "; ".join(answers)
+
+    # Cap at 2 follow-up answers max
+    if len(answers) >= 2:
+        session["problem_description"] = full_desc
+        return None, True
+
+    # Ask AI if we need one more question or have enough
+    context = f"Initial: {session['problem_description']}\n"
+    for i, ans in enumerate(answers):
+        context += f"Answer {i + 1}: {ans}\n"
+
+    system = f"""You are gathering info about a {session['issue']['job']} issue for {business['business_name']}.
+{context}
+Do you have enough detail to understand the problem?
+If yes, reply with exactly: READY
+If not, ask ONE more short natural follow-up question."""
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "system", "content": system}],
+        max_tokens=80,
     )
 
     reply = response.choices[0].message.content.strip()
 
-    return jsonify({"reply":reply})
+    if reply.upper().startswith("READY"):
+        session["problem_description"] = full_desc
+        return None, True
 
-# --------------------------------------------------
-# RUN SERVER
-# --------------------------------------------------
+    return reply, False
+
+
+def ai_reply(message, session, business):
+    history = session.setdefault("history", [])
+    history.append({"role": "user", "content": message})
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "system", "content": build_system_prompt(business)}] + history[-10:],
+        max_tokens=300,
+    )
+
+    reply = response.choices[0].message.content.strip()
+    history.append({"role": "assistant", "content": reply})
+    session["last_bot_message"] = reply
+    return reply
+
+
+def new_session():
+    return {
+        "state": "conversation",
+        "issue": None,
+        "offered": False,
+        "name": None,
+        "contact": None,
+        "address": None,
+        "problem_description": "",
+        "followup_answers": [],
+        "urgency": "",
+        "preferred_time": "",
+        "history": [],
+        "last_bot_message": ""
+    }
+
+
+# =========================
+# ROUTES
+# =========================
+
+@app.route("/")
+def home():
+    return "App running"
+
+
+@app.route("/widget")
+def widget():
+    business_id = request.args.get("business")
+    if not business_id:
+        return "Missing business ID", 400
+    business = load_business(business_id)
+    if not business:
+        return "Business not found", 404
+    return render_template("widget.html", business=business)
+
+
+@app.route("/chat-ui")
+def chat_ui():
+    business_id = request.args.get("business")
+    if not business_id:
+        return "Missing business ID", 400
+    business = load_business(business_id)
+    if not business:
+        return "Business not found", 404
+    return render_template("chat.html", business=business)
+
+
+@app.route("/init", methods=["POST"])
+def init_chat():
+    data = request.json
+    user_id = data.get("user_id")
+    business_id = data.get("business_id")
+
+    if not user_id or not business_id:
+        return jsonify({"reply": "Missing data"}), 400
+
+    business = load_business(business_id)
+    if not business:
+        return jsonify({"reply": "Business not found"}), 404
+
+    sessions[user_id] = new_session()
+
+    return jsonify({
+        "reply": f"Hi! Welcome to {business['business_name']}. How can I help you today?"
+    })
+
+
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.json
+    user_id = data.get("user_id")
+    message = data.get("message", "").strip()
+    business_id = data.get("business_id")
+
+    if not user_id or not message or not business_id:
+        return jsonify({"reply": "Missing data"}), 400
+
+    business = load_business(business_id)
+    if not business:
+        return jsonify({"reply": "Business not found"}), 404
+
+    if user_id not in sessions:
+        sessions[user_id] = new_session()
+
+    session = sessions[user_id]
+
+    # Lead capture flow — these states bypass the AI entirely
+    if session["state"] == "conversation" and session["offered"] and user_wants_contact(message, session.get("last_bot_message", "")):
+        session["state"] = "ask_name"
+        reply = "Great — can I grab your name?"
+        session["last_bot_message"] = reply
+        return jsonify({"reply": reply})
+
+    if session["state"] == "ask_name":
+        session["name"] = extract_name(message)
+        session["state"] = "ask_contact"
+        reply = f"Nice to meet you, {session['name']}! What's the best phone number or email to reach you on?"
+        session["last_bot_message"] = reply
+        return jsonify({"reply": reply})
+
+    if session["state"] == "ask_contact":
+        contact = extract_contact(message)
+        if not contact:
+            return jsonify({"reply": "Please send a valid phone number or email address."})
+        session["contact"] = contact
+        session["state"] = "ask_address"
+        reply = "And what's the address for the job?"
+        session["last_bot_message"] = reply
+        return jsonify({"reply": reply})
+
+    if session["state"] == "ask_address":
+        session["address"] = message
+        session["state"] = "ask_urgency"
+        reply = "How urgent is it? For example — is it an emergency, needs sorting this week, or no rush?"
+        session["last_bot_message"] = reply
+        return jsonify({"reply": reply})
+
+    if session["state"] == "ask_urgency":
+        session["urgency"] = message
+        session["state"] = "ask_time"
+        reply = "And what time works best for someone to get in touch or come round? Morning, afternoon, evening — or a specific day?"
+        session["last_bot_message"] = reply
+        return jsonify({"reply": reply})
+
+    if session["state"] == "ask_time":
+        session["preferred_time"] = message
+        send_email(
+            business_name=business["business_name"],
+            to_email=business.get("email", ""),
+            name=session["name"],
+            contact=session["contact"],
+            issue=session["issue"]["job"] if session["issue"] else "General enquiry",
+            description=session.get("problem_description", ""),
+            address=session["address"],
+            urgency=session["urgency"],
+            preferred_time=session["preferred_time"]
+        )
+        session["state"] = "done"
+        reply = f"Perfect — all booked in. Someone from {business['business_name']} will be in touch shortly."
+        session["last_bot_message"] = reply
+        return jsonify({"reply": reply})
+
+    # If a previous booking is done, allow starting a fresh one
+    if session["state"] == "done":
+        issue = detect_issue(message, business)
+        if issue:
+            session.update({
+                "state": "gathering_info",
+                "issue": issue,
+                "problem_description": message,
+                "offered": False,
+                "name": None,
+                "contact": None,
+                "address": None,
+                "urgency": "",
+                "preferred_time": "",
+                "followup_answers": []
+            })
+            try:
+                reply = get_first_followup(session, business)
+            except Exception:
+                reply = f"Got it. Can you tell me a bit more about the {issue['job']} issue?"
+            session["last_bot_message"] = reply
+            return jsonify({"reply": reply})
+
+    # Gathering more info about the problem before offering contact
+    if session["state"] == "gathering_info":
+        try:
+            reply, ready = process_followup(message, session, business)
+        except Exception:
+            ready = True
+            reply = None
+
+        if ready:
+            session["state"] = "conversation"
+            session["offered"] = True
+            contact_prompt = business.get("contact_prompt", "someone from our team")
+            reply = (
+                f"Thanks for those details — that's really helpful.\n\n"
+                f"Usually costs around {session['issue']['price']}.\n\n"
+                f"Would you like {contact_prompt} to contact you to sort this out?"
+            )
+            session["last_bot_message"] = reply
+            return jsonify({"reply": reply})
+        else:
+            session["last_bot_message"] = reply
+            return jsonify({"reply": reply})
+
+    # Keyword issue detection (only in open conversation state)
+    if session["state"] == "conversation":
+        issue = detect_issue(message, business)
+        if issue:
+            session["issue"] = issue
+            session["problem_description"] = message
+            session["followup_answers"] = []
+            session["state"] = "gathering_info"
+            try:
+                reply = get_first_followup(session, business)
+            except Exception:
+                reply = f"Can you tell me a bit more about the {issue['job']} issue?"
+            session["last_bot_message"] = reply
+            return jsonify({"reply": reply})
+
+    # AI handles everything else
+    try:
+        reply = ai_reply(message, session, business)
+        return jsonify({"reply": reply})
+    except Exception:
+        return jsonify({"reply": "Sorry, I'm having trouble right now. Please try again in a moment."})
+
 
 if __name__ == "__main__":
-
-    app.run(host="0.0.0.0", port=5000)
+    app.run(debug=True)

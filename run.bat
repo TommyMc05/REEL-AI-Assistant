@@ -1,14 +1,13 @@
 @echo off
-echo Starting AI assistant...
-
-:: go to this folder
 cd /d "%~dp0"
 
-:: activate your virtual environment
-call venv\Scripts\activate
+if not exist venv (
+    python -m venv venv
+)
 
-:: run your Flask app
+call venv\Scripts\activate
+pip install flask resend python-dotenv
+
 python app.py
 
-:: keep window open so you can see errors
 pause
