@@ -417,7 +417,8 @@ def chat():
             })
             try:
                 reply = get_first_followup(session, business)
-            except Exception:
+            except Exception as e:
+                print(f"[ERROR] get_first_followup (done state): {e}")
                 reply = f"Got it. Can you tell me a bit more about the {issue['job']} issue?"
             session["last_bot_message"] = reply
             return jsonify({"reply": reply})
@@ -426,7 +427,8 @@ def chat():
     if session["state"] == "gathering_info":
         try:
             reply, ready = process_followup(message, session, business)
-        except Exception:
+        except Exception as e:
+            print(f"[ERROR] process_followup: {e}")
             ready = True
             reply = None
 
@@ -436,7 +438,8 @@ def chat():
             contact_prompt = business.get("contact_prompt", "someone from our team")
             try:
                 estimate = generate_quote_estimate(session, business)
-            except Exception:
+            except Exception as e:
+                print(f"[ERROR] generate_quote_estimate: {e}")
                 estimate = f"Usually costs around {session['issue']['price']}."
             reply = f"{estimate}\n\nWould you like {contact_prompt} to contact you to sort this out?"
             session["last_bot_message"] = reply
@@ -455,7 +458,8 @@ def chat():
             session["state"] = "gathering_info"
             try:
                 reply = get_first_followup(session, business)
-            except Exception:
+            except Exception as e:
+                print(f"[ERROR] get_first_followup: {e}")
                 reply = f"Can you tell me a bit more about the {issue['job']} issue?"
             session["last_bot_message"] = reply
             return jsonify({"reply": reply})
@@ -464,7 +468,8 @@ def chat():
     try:
         reply = ai_reply(message, session, business)
         return jsonify({"reply": reply})
-    except Exception:
+    except Exception as e:
+        print(f"[ERROR] ai_reply: {e}")
         return jsonify({"reply": "Sorry, I'm having trouble right now. Please try again in a moment."})
 
 
