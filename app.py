@@ -196,9 +196,9 @@ def process_followup(message, session, business):
 
     system = f"""You are gathering info about a {session['issue']['job']} issue for {business['business_name']}.
 {context}
-Do you have enough detail to understand the problem?
+You already know the above. Do you have enough to understand the problem well enough to estimate a job?
 If yes, reply with exactly: READY
-If not, ask ONE more short natural follow-up question."""
+If not, ask ONE specific follow-up question about something you don't yet know — e.g. where exactly the problem is, how severe it is, or what has already been tried. Do NOT ask about anything already covered above. Do NOT greet the customer."""
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
@@ -224,18 +224,20 @@ def generate_quote_estimate(session, business):
 
     quote_notes = session['issue'].get('quote_notes', '')
 
-    system = f"""You are an experienced estimator for {business['business_name']}.
-A customer has described their problem: "{full_description}"
+    system = f"""You are an experienced tradesman giving a quote estimate for {business['business_name']}.
+
+Customer's problem: "{full_description}"
 Job type: {session['issue']['job']}
-Standard price range: {session['issue']['price']}
+Price range: {session['issue']['price']}
 {f"Pricing notes: {quote_notes}" if quote_notes else ""}
 
-Write 2-3 sentences:
-1. Briefly say what the issue sounds like based on their description
-2. Give a specific honest estimate within or close to the price range based on the details
-3. Mention one factor that could push it higher or lower if relevant
+Write 2-3 short sentences giving a direct estimate. Rules:
+- Do NOT greet the customer or say "Hi"
+- Do NOT ask any questions
+- State what the issue sounds like, give a specific price estimate, and mention one thing that could affect cost
+- Be direct and natural, like a tradesman texting a customer
 
-Sound like an experienced tradesman — natural and straightforward, not corporate."""
+Example: "Sounds like a faulty thermostat or pressure issue. Based on what you've described, I'd estimate around £110–£140. If a part needs ordering it could push it a bit higher."
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
