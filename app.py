@@ -237,7 +237,8 @@ Write 2-3 short sentences giving a direct estimate. Rules:
 - State what the issue sounds like, give a specific price estimate, and mention one thing that could affect cost
 - Be direct and natural, like a tradesman texting a customer
 
-Example: "Sounds like a faulty thermostat or pressure issue. Based on what you've described, I'd estimate around £110–£140. If a part needs ordering it could push it a bit higher."
+Example: Sounds like a faulty thermostat or pressure issue. Based on what you've described, I'd estimate around 110-140. If a part needs ordering it could push it a bit higher.
+"""
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
