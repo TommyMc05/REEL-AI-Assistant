@@ -3,7 +3,7 @@ import resend
 
 
 def send_email(business_name, to_email, name, contact, issue, description, address, urgency, preferred_time):
-    resend.api_key = os.getenv("RESEND_API_KEY")
+    resend.api_key = os.getenv("RESEND_API_KEY", "").strip()
     subject = f"New Lead — {business_name}"
     body = f"""New lead received via chat widget.
 

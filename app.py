@@ -12,7 +12,7 @@ from email_service import send_email
 
 app = Flask(__name__)
 client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),
+    api_key=os.getenv("OPENAI_API_KEY", "").strip(),
     timeout=30.0,
     http_client=httpx.Client(http2=False)
 )
