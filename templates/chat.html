@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -10,6 +10,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh;
     background: #eef1f6;
 }
 
@@ -196,6 +197,7 @@ body {
 /* ── Input area ── */
 #input-area {
     padding: 12px 14px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     background: #ffffff;
     border-top: 1px solid #e2e8f0;
     display: flex;
@@ -249,6 +251,7 @@ body {
 #footer {
     text-align: center;
     padding: 7px;
+    padding-bottom: calc(7px + env(safe-area-inset-bottom, 0px));
     font-size: 11px;
     color: #94a3b8;
     background: #ffffff;
