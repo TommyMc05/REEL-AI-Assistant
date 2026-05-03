@@ -10,7 +10,7 @@ from openai import OpenAI
 from email_service import send_email
 
 app = Flask(__name__)
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=30.0)
 
 sessions = {}
 
@@ -280,6 +280,21 @@ def new_session():
 @app.route("/")
 def home():
     return "App running"
+
+
+@app.route("/test-openai")
+def test_openai():
+    key = os.getenv("OPENAI_API_KEY", "")
+    key_info = f"Key set: {bool(key)}, Length: {len(key)}, Starts with: {key[:7] if len(key) > 7 else 'too short'}"
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": "Say hello in one word"}],
+            max_tokens=10,
+        )
+        return jsonify({"status": "ok", "key_info": key_info, "response": response.choices[0].message.content})
+    except Exception as e:
+        return jsonify({"status": "error", "key_info": key_info, "error": str(e), "error_type": type(e).__name__})
 
 
 @app.route("/widget")

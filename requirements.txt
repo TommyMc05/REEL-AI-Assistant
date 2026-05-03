@@ -1,5 +1,6 @@
 Flask
-openai
+openai==1.51.2
+httpx==0.27.2
 python-dotenv
 gunicorn
 resend
