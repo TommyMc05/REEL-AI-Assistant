@@ -8,17 +8,20 @@
       "leak repair": {
         "keywords": ["leak", "drip", "dripping", "water leak", "pipe leak"],
         "price": "£80–£120",
-        "advice": "Try turning off the water supply to prevent further damage."
+        "advice": "Try turning off the water supply to prevent further damage.",
+        "quote_notes": "Dripping tap or washer replacement is around £80. Visible pipe leak under a sink or behind a toilet is £90-100. Leak inside a wall or under the floor will be toward £120 or more depending on access."
       },
       "boiler repair": {
         "keywords": ["boiler", "heating", "no hot water", "radiator", "hot water"],
         "price": "£90–£180",
-        "advice": "Check pressure levels and reset the boiler if needed."
+        "advice": "Check pressure levels and reset the boiler if needed.",
+        "quote_notes": "Boiler reset or pressure top-up is £90. Faulty thermostat or valve replacement is £110-140. If a part needs ordering or the issue is a heat exchanger, it can reach £180+."
       },
       "blocked drain": {
         "keywords": ["blocked", "drain", "clogged", "slow drain", "sink"],
         "price": "£60–£100",
-        "advice": "Avoid using chemical drain cleaners as they can damage pipes."
+        "advice": "Avoid using chemical drain cleaners as they can damage pipes.",
+        "quote_notes": "Simple sink or bath blockage cleared with a rod is £60-70. Toilet blockage is around £70-80. Main drain or outdoor drain blockage requiring jetting is £90-100."
       }
     }
   }

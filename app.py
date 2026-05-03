@@ -217,10 +217,13 @@ def generate_quote_estimate(session, business):
     if answers:
         full_description += " " + " ".join(answers)
 
+    quote_notes = session['issue'].get('quote_notes', '')
+
     system = f"""You are an experienced estimator for {business['business_name']}.
 A customer has described their problem: "{full_description}"
 Job type: {session['issue']['job']}
 Standard price range: {session['issue']['price']}
+{f"Pricing notes: {quote_notes}" if quote_notes else ""}
 
 Write 2-3 sentences:
 1. Briefly say what the issue sounds like based on their description
