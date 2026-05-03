@@ -6,11 +6,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import httpx
 from openai import OpenAI
 from email_service import send_email
 
 app = Flask(__name__)
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=30.0)
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    timeout=30.0,
+    http_client=httpx.Client(http2=False)
+)
 
 sessions = {}
 
