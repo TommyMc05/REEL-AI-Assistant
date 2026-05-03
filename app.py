@@ -210,6 +210,33 @@ If not, ask ONE more short natural follow-up question."""
     return reply, False
 
 
+def generate_quote_estimate(session, business):
+    """Generate a personalised quote estimate based on all gathered problem info."""
+    answers = session.get("followup_answers", [])
+    full_description = session["problem_description"]
+    if answers:
+        full_description += " " + " ".join(answers)
+
+    system = f"""You are an experienced estimator for {business['business_name']}.
+A customer has described their problem: "{full_description}"
+Job type: {session['issue']['job']}
+Standard price range: {session['issue']['price']}
+
+Write 2-3 sentences:
+1. Briefly say what the issue sounds like based on their description
+2. Give a specific honest estimate within or close to the price range based on the details
+3. Mention one factor that could push it higher or lower if relevant
+
+Sound like an experienced tradesman — natural and straightforward, not corporate."""
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "system", "content": system}],
+        max_tokens=150,
+    )
+    return response.choices[0].message.content.strip()
+
+
 def ai_reply(message, session, business):
     history = session.setdefault("history", [])
     history.append({"role": "user", "content": message})
@@ -404,11 +431,11 @@ def chat():
             session["state"] = "conversation"
             session["offered"] = True
             contact_prompt = business.get("contact_prompt", "someone from our team")
-            reply = (
-                f"Thanks for those details — that's really helpful.\n\n"
-                f"Usually costs around {session['issue']['price']}.\n\n"
-                f"Would you like {contact_prompt} to contact you to sort this out?"
-            )
+            try:
+                estimate = generate_quote_estimate(session, business)
+            except Exception:
+                estimate = f"Usually costs around {session['issue']['price']}."
+            reply = f"{estimate}\n\nWould you like {contact_prompt} to contact you to sort this out?"
             session["last_bot_message"] = reply
             return jsonify({"reply": reply})
         else:
