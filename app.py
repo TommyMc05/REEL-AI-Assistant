@@ -289,17 +289,34 @@ def home():
 
 @app.route("/test-openai")
 def test_openai():
+    import requests as req
     key = os.getenv("OPENAI_API_KEY", "")
     key_info = f"Key set: {bool(key)}, Length: {len(key)}, Starts with: {key[:7] if len(key) > 7 else 'too short'}"
+
+    # Test 1: raw requests library (bypasses httpx)
+    try:
+        r = req.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "Say hello"}], "max_tokens": 5},
+            timeout=15
+        )
+        raw_result = {"status_code": r.status_code, "body": r.text[:300]}
+    except Exception as e:
+        raw_result = {"error": str(e), "type": type(e).__name__}
+
+    # Test 2: openai SDK
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": "Say hello in one word"}],
             max_tokens=10,
         )
-        return jsonify({"status": "ok", "key_info": key_info, "response": response.choices[0].message.content})
+        sdk_result = {"status": "ok", "response": response.choices[0].message.content}
     except Exception as e:
-        return jsonify({"status": "error", "key_info": key_info, "error": str(e), "error_type": type(e).__name__})
+        sdk_result = {"status": "error", "error": str(e), "type": type(e).__name__}
+
+    return jsonify({"key_info": key_info, "raw_requests": raw_result, "openai_sdk": sdk_result})
 
 
 @app.route("/widget")
