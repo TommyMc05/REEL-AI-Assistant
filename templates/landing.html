@@ -11,12 +11,11 @@
     nav { background: #0f172a; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
     nav .logo { color: #fff; font-weight: 800; font-size: 20px; text-decoration: none; }
     nav .logo span { color: #60a5fa; }
-    .nav-links { display: flex; gap: 24px; align-items: center; }
-    .nav-links a { color: #cbd5e1; text-decoration: none; font-size: 14px; }
+    .nav-links { display: flex; gap: 28px; align-items: center; }
+    .nav-links a { color: #94a3b8; text-decoration: none; font-size: 14px; }
     .nav-links a:hover { color: #fff; }
-    .nav-cta { background: #2563eb; color: #fff !important; padding: 8px 18px; border-radius: 8px; font-weight: 600 !important; }
-    .nav-cta:hover { background: #1d4ed8 !important; }
 
+    /* Hero */
     .hero-wrap { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%); }
     .hero { max-width: 1100px; margin: 0 auto; padding: 80px 28px; display: flex; align-items: center; gap: 60px; min-height: 560px; }
     .hero-text { flex: 1; }
@@ -25,10 +24,10 @@
     .hero h1 span { color: #60a5fa; }
     .hero p { color: #94a3b8; font-size: 18px; line-height: 1.65; margin-bottom: 38px; max-width: 480px; }
     .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; }
-    .btn-primary { background: #2563eb; color: #fff; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block; }
-    .btn-primary:hover { background: #1d4ed8; }
     .btn-ghost { background: rgba(255,255,255,0.08); color: #e2e8f0; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 16px; display: inline-block; border: 1px solid rgba(255,255,255,0.15); }
     .btn-ghost:hover { background: rgba(255,255,255,0.13); }
+    .btn-blue { background: #2563eb; color: #fff; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block; }
+    .btn-blue:hover { background: #1d4ed8; }
 
     .hero-demo { flex: 0 0 360px; }
     .demo-label { color: #475569; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; text-align: center; }
@@ -37,22 +36,35 @@
     .demo-empty { background: #1e293b; display: flex; align-items: center; justify-content: center; border-radius: 16px; height: 480px; }
     .demo-empty p { color: #475569; font-size: 14px; }
 
-    .proof-bar { background: #f8fafc; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 22px 28px; text-align: center; }
-    .proof-bar p { color: #64748b; font-size: 14px; font-weight: 500; }
-    .proof-bar strong { color: #0f172a; }
+    /* Problem */
+    .problem { background: #0f172a; padding: 72px 28px; }
+    .problem-inner { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+    .problem-step { background: #1e293b; padding: 36px 28px; text-align: center; }
+    .problem-step:first-child { border-radius: 16px 0 0 16px; }
+    .problem-step:last-child { border-radius: 0 16px 16px 0; background: #1e3a5f; }
+    .problem-step .icon { font-size: 36px; margin-bottom: 16px; }
+    .problem-step h3 { color: #e2e8f0; font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .problem-step p { color: #64748b; font-size: 14px; line-height: 1.6; }
+    .problem-step:last-child p { color: #93c5fd; }
+    .problem-head { text-align: center; margin-bottom: 48px; }
+    .problem-head h2 { color: #fff; font-size: 32px; font-weight: 800; margin-bottom: 10px; }
+    .problem-head p { color: #64748b; font-size: 16px; }
 
+    /* Shared */
     .section-wrap { max-width: 1100px; margin: 0 auto; padding: 0 28px; }
-
-    .features { padding: 80px 28px; background: #fff; }
     .section-head { text-align: center; margin-bottom: 56px; }
     .section-head h2 { font-size: 36px; font-weight: 800; margin-bottom: 12px; }
     .section-head p { color: #64748b; font-size: 16px; }
+
+    /* Features */
+    .features { padding: 80px 28px; background: #fff; }
     .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1000px; margin: 0 auto; }
     .feature-card { padding: 32px 24px; border-radius: 16px; background: #f8fafc; border: 1px solid #e2e8f0; }
     .feature-icon { width: 52px; height: 52px; background: linear-gradient(135deg, #2563eb, #1d4ed8); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 18px; }
     .feature-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
     .feature-card p { color: #64748b; font-size: 14px; line-height: 1.6; }
 
+    /* How it works */
     .how { padding: 80px 28px; background: #f8fafc; }
     .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; max-width: 900px; margin: 0 auto; }
     .step { text-align: center; }
@@ -60,24 +72,36 @@
     .step h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
     .step p { color: #64748b; font-size: 14px; line-height: 1.6; }
 
-    .pricing { padding: 80px 28px; background: #fff; }
-    .pricing-card { max-width: 420px; margin: 0 auto; background: linear-gradient(135deg, #0f172a, #1e3a5f); border-radius: 24px; padding: 48px; color: #fff; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.12); }
-    .plan-name { color: #93c5fd; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
-    .price { font-size: 64px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
-    .price sub { font-size: 26px; font-weight: 600; opacity: 0.7; vertical-align: baseline; }
-    .per { color: #94a3b8; font-size: 14px; margin-bottom: 32px; }
-    .pricing-features { list-style: none; text-align: left; margin-bottom: 36px; display: flex; flex-direction: column; gap: 12px; }
-    .pricing-features li { color: #e2e8f0; font-size: 15px; display: flex; gap: 10px; align-items: flex-start; }
-    .pricing-features li::before { content: "✓"; color: #60a5fa; font-weight: 700; flex-shrink: 0; }
-    .pricing-cta { display: block; background: #2563eb; color: #fff; padding: 16px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 16px; }
-    .pricing-cta:hover { background: #1d4ed8; }
-    .pricing-note { color: #94a3b8; font-size: 13px; text-align: center; margin-top: 16px; }
+    /* Trades */
+    .trades { padding: 80px 28px; background: #fff; }
+    .trades-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; max-width: 900px; margin: 0 auto; }
+    .trade-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 28px 20px; text-align: center; }
+    .trade-card .t-icon { font-size: 36px; margin-bottom: 12px; }
+    .trade-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .trade-card p { color: #64748b; font-size: 13px; line-height: 1.5; }
 
-    .cta-strip { background: linear-gradient(135deg, #1e3a5f, #2563eb); padding: 72px 28px; text-align: center; }
-    .cta-strip h2 { color: #fff; font-size: 36px; font-weight: 800; margin-bottom: 14px; }
-    .cta-strip p { color: #bfdbfe; font-size: 17px; margin-bottom: 36px; }
-    .btn-white { background: #fff; color: #1d4ed8; padding: 16px 36px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 17px; display: inline-block; }
-    .btn-white:hover { background: #f1f5f9; }
+    /* What you get */
+    .get { padding: 80px 28px; background: #0f172a; }
+    .get .section-head h2 { color: #fff; }
+    .get .section-head p { color: #64748b; }
+    .get-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; max-width: 1000px; margin: 0 auto; }
+    .get-card { background: #1e293b; border-radius: 20px; padding: 36px; border: 1px solid #334155; }
+    .get-card .card-label { color: #60a5fa; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+    .get-card h3 { color: #f1f5f9; font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+    .get-card p { color: #64748b; font-size: 14px; line-height: 1.7; margin-bottom: 24px; }
+    .get-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .get-list li { color: #94a3b8; font-size: 14px; display: flex; gap: 10px; align-items: flex-start; }
+    .get-list li::before { content: "✓"; color: #60a5fa; font-weight: 700; flex-shrink: 0; }
+
+    /* Contact */
+    .contact { background: linear-gradient(135deg, #1e3a5f, #2563eb); padding: 80px 28px; text-align: center; }
+    .contact h2 { color: #fff; font-size: 36px; font-weight: 800; margin-bottom: 14px; }
+    .contact p { color: #bfdbfe; font-size: 17px; margin-bottom: 40px; max-width: 500px; margin-left: auto; margin-right: auto; }
+    .contact-options { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; }
+    .contact-btn { background: #fff; color: #1d4ed8; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block; }
+    .contact-btn:hover { background: #f1f5f9; }
+    .contact-btn.outline { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.4); }
+    .contact-btn.outline:hover { background: rgba(255,255,255,0.1); }
 
     footer { background: #0f172a; padding: 32px 28px; text-align: center; }
     footer p { color: #475569; font-size: 13px; }
@@ -88,7 +112,11 @@
       .hero { flex-direction: column; padding: 48px 20px; gap: 40px; min-height: auto; }
       .hero h1 { font-size: 32px; }
       .hero-demo { width: 100%; flex: none; }
-      .features-grid, .steps { grid-template-columns: 1fr; }
+      .features-grid, .trades-grid, .get-grid { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .problem-inner { grid-template-columns: 1fr; gap: 2px; }
+      .problem-step:first-child { border-radius: 16px 16px 0 0; }
+      .problem-step:last-child { border-radius: 0 0 16px 16px; }
       .hide-mobile { display: none; }
     }
   </style>
@@ -99,20 +127,21 @@
   <a href="/" class="logo">Leed<span>AI</span></a>
   <div class="nav-links">
     <a href="#features" class="hide-mobile">Features</a>
-    <a href="#pricing" class="hide-mobile">Pricing</a>
-    <a href="/login">Sign in</a>
-    <a href="/signup" class="nav-cta">Start Free Trial</a>
+    <a href="#trades" class="hide-mobile">Trades</a>
+    <a href="#contact">Get in touch</a>
+    <a href="/login" class="hide-mobile">Client Login</a>
   </div>
 </nav>
 
+<!-- Hero -->
 <div class="hero-wrap">
   <div class="hero">
     <div class="hero-text">
       <div class="hero-badge">Built for Tradespeople</div>
-      <h1>Never miss a<br><span>customer lead</span><br>again.</h1>
-      <p>LeedAI is your always-on AI receptionist. It chats with visitors on your website, qualifies their job, and emails you the lead — even at 2am when you're on another job.</p>
+      <h1>Your website,<br><span>working for you</span><br>24/7.</h1>
+      <p>LeedAI puts an AI receptionist on your website. It chats with visitors, figures out what they need, and sends you a qualified lead — even when you're on the tools.</p>
       <div class="hero-ctas">
-        <a href="/signup" class="btn-primary">Start Free Trial →</a>
+        <a href="#contact" class="btn-blue">Get in touch</a>
         <a href="#demo" class="btn-ghost">See it live ↓</a>
       </div>
     </div>
@@ -131,109 +160,176 @@
   </div>
 </div>
 
-<div class="proof-bar" id="demo">
+<!-- The problem -->
+<div class="problem" id="demo">
   <div class="section-wrap">
-    <p><strong>Trusted by trade businesses</strong> across plumbing, electrical, roofing, landscaping, and more</p>
+    <div class="problem-head">
+      <h2>Every missed message is a missed job</h2>
+      <p>Most trade businesses lose leads the same way.</p>
+    </div>
+    <div class="problem-inner">
+      <div class="problem-step">
+        <div class="icon">📱</div>
+        <h3>Customer visits your site</h3>
+        <p>They want a quote. It's 8pm. You're finishing up a job or winding down for the night.</p>
+      </div>
+      <div class="problem-step">
+        <div class="icon">🔇</div>
+        <h3>No one responds</h3>
+        <p>There's no chat, no callback, no way to reach you. They move on and call someone else.</p>
+      </div>
+      <div class="problem-step">
+        <div class="icon">✅</div>
+        <h3>LeedAI handles it</h3>
+        <p>Your AI steps in, qualifies the job, and emails you the lead. You wake up to a hot enquiry.</p>
+      </div>
+    </div>
   </div>
 </div>
 
+<!-- Features -->
 <div class="features" id="features">
   <div class="section-wrap">
     <div class="section-head">
-      <h2>Everything you need to capture every lead</h2>
-      <p>Set it up once. Let it run while you work.</p>
+      <h2>Everything included, nothing to manage</h2>
+      <p>Set it up once. It runs in the background while you work.</p>
     </div>
     <div class="features-grid">
       <div class="feature-card">
         <div class="feature-icon">💬</div>
         <h3>24/7 AI Chat</h3>
-        <p>Your AI receptionist answers questions, gives rough estimates, and qualifies jobs — any time of day or night.</p>
+        <p>Answers customer questions, figures out what the job is, and gives a rough estimate — any time of day or night.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">📧</div>
         <h3>Instant Lead Emails</h3>
-        <p>The moment someone shares their details, you get an email with their name, issue, address, and preferred contact time.</p>
+        <p>The moment someone shares their details you get an email with their name, issue, address, and preferred callback time.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">📊</div>
         <h3>Lead Dashboard</h3>
-        <p>All your leads in one place. See who enquired, what the job is, and how urgent it is — at a glance.</p>
+        <p>Log in any time to see every enquiry, what the job is, how urgent it is, and when they want to be contacted.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">🎨</div>
-        <h3>Your Brand, Your Colours</h3>
-        <p>Customise the widget to match your business — colour, welcome message, and tone of voice.</p>
+        <h3>Branded to Your Business</h3>
+        <p>Your name, your colours, your tone of voice. Customers won't know it's AI — it just feels like your team.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">💰</div>
-        <h3>Pricing Built In</h3>
-        <p>Add your jobs and price ranges. The AI gives instant ballpark estimates so customers are primed to book.</p>
+        <h3>Built-in Pricing</h3>
+        <p>Add your jobs and price ranges. The AI gives customers a ballpark figure instantly so they're ready to book.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">⚡</div>
         <h3>One Line of Code</h3>
-        <p>Paste one snippet into your website and you're live. Works on WordPress, Wix, Squarespace — anything.</p>
+        <p>One snippet pasted into your website and you're live. Works on WordPress, Wix, Squarespace — anything.</p>
       </div>
     </div>
   </div>
 </div>
 
+<!-- How it works -->
 <div class="how">
   <div class="section-wrap">
     <div class="section-head">
-      <h2>Up and running in minutes</h2>
-      <p>No technical skills needed.</p>
+      <h2>Up and running in under an hour</h2>
+      <p>No technical skills needed on your end.</p>
     </div>
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
-        <h3>Set up your profile</h3>
-        <p>Tell us your business name, trade, services, and pricing. Takes about 5 minutes.</p>
+        <h3>We set up your profile</h3>
+        <p>We configure the AI with your business name, services, pricing, and tone of voice. Tailored to your trade.</p>
       </div>
       <div class="step">
         <div class="step-num">2</div>
-        <h3>Paste one snippet</h3>
-        <p>Copy a single line of code from your dashboard and paste it into your website. Done.</p>
+        <h3>You paste one line</h3>
+        <p>Copy a single line of code from your dashboard and paste it into your website. That's it — you're live.</p>
       </div>
       <div class="step">
         <div class="step-num">3</div>
-        <h3>Receive leads on autopilot</h3>
-        <p>Your AI handles the chat. You get an email with every qualified lead — ready to call back.</p>
+        <h3>Leads come to you</h3>
+        <p>Every qualified enquiry lands in your inbox and dashboard. You just call them back and close the job.</p>
       </div>
     </div>
   </div>
 </div>
 
-<div class="pricing" id="pricing">
+<!-- Trades -->
+<div class="trades" id="trades">
   <div class="section-wrap">
     <div class="section-head">
-      <h2>Simple, honest pricing</h2>
-      <p>One plan. Everything included. Cancel any time.</p>
+      <h2>Built for your trade</h2>
+      <p>Pre-configured for the most common jobs in each industry — ready to go from day one.</p>
     </div>
-    <div class="pricing-card">
-      <div class="plan-name">Monthly Plan</div>
-      <div class="price"><sub>£</sub>97</div>
-      <div class="per">per month &nbsp;·&nbsp; cancel any time</div>
-      <ul class="pricing-features">
-        <li>Unlimited leads captured</li>
-        <li>AI chat widget for your website</li>
-        <li>Instant email notifications</li>
-        <li>Lead tracking dashboard</li>
-        <li>Custom branding &amp; colours</li>
-        <li>Built-in pricing &amp; job estimates</li>
-        <li>One-line embed code</li>
-        <li>Email support</li>
-      </ul>
-      <a href="/signup" class="pricing-cta">Start Your Free Trial →</a>
+    <div class="trades-grid">
+      <div class="trade-card">
+        <div class="t-icon">🔧</div>
+        <h3>Plumbing</h3>
+        <p>Leaks, boiler repairs, blocked drains, bathroom installs</p>
+      </div>
+      <div class="trade-card">
+        <div class="t-icon">⚡</div>
+        <h3>Electrical</h3>
+        <p>Fuse boards, EV chargers, rewiring, sockets, lighting</p>
+      </div>
+      <div class="trade-card">
+        <div class="t-icon">🏠</div>
+        <h3>Roofing</h3>
+        <p>Repairs, replacements, flat roofing, guttering, chimney work</p>
+      </div>
+      <div class="trade-card">
+        <div class="t-icon">🌿</div>
+        <h3>Landscaping</h3>
+        <p>Garden clearance, lawn care, hedges, patios, tree surgery</p>
+      </div>
     </div>
-    <p class="pricing-note">14-day free trial · No credit card required to start</p>
   </div>
 </div>
 
-<div class="cta-strip">
-  <h2>Ready to stop missing leads?</h2>
-  <p>Join trade businesses already capturing more customers with LeedAI.</p>
-  <a href="/signup" class="btn-white">Start Your Free Trial — It's Free →</a>
+<!-- What you get -->
+<div class="get">
+  <div class="section-wrap">
+    <div class="section-head">
+      <h2>What you and your customers see</h2>
+      <p>Two sides of the same tool.</p>
+    </div>
+    <div class="get-grid">
+      <div class="get-card">
+        <div class="card-label">Your customer sees</div>
+        <h3>A helpful chat on your website</h3>
+        <p>They type their problem, get useful advice and a rough price, then share their details to be contacted. Feels like talking to a real person on your team.</p>
+        <ul class="get-list">
+          <li>Instant responses at any time of day</li>
+          <li>Practical advice while they wait</li>
+          <li>Rough quote before committing</li>
+          <li>Simple, friendly — no forms or hold music</li>
+        </ul>
+      </div>
+      <div class="get-card">
+        <div class="card-label">You see</div>
+        <h3>A ready-to-call lead in your inbox</h3>
+        <p>Every enquiry lands as an email the moment it's captured — and stays in your dashboard so nothing slips through the cracks.</p>
+        <ul class="get-list">
+          <li>Customer name, number, and email</li>
+          <li>What the job is and where</li>
+          <li>How urgent it is</li>
+          <li>Best time to call them back</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Contact -->
+<div class="contact" id="contact">
+  <h2>Like what you see?</h2>
+  <p>Get in touch and we'll set it up for your business — configured to your trade, your services, and your brand.</p>
+  <div class="contact-options">
+    <a href="mailto:your@email.com" class="contact-btn">Email us</a>
+    <a href="https://wa.me/447000000000" class="contact-btn outline">WhatsApp us</a>
+  </div>
 </div>
 
 <footer>
