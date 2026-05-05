@@ -531,8 +531,7 @@ def new_session():
 @app.route("/")
 def home():
     businesses = list_businesses()
-    # Prefer plumber for the demo — broadest range of relatable queries
-    demo_id = next((b["business_id"] for b in businesses if "plumb" in b["business_id"].lower()), None)
+    demo_id = next((b["business_id"] for b in businesses if b["business_id"] == "roofrestore"), None)
     if not demo_id:
         demo_id = next((b["business_id"] for b in businesses), None)
     return render_template("landing.html", demo_id=demo_id)
