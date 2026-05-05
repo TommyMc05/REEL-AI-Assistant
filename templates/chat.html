@@ -194,6 +194,36 @@ body {
     30%           { transform: translateY(-5px); }
 }
 
+/* ── Quick-reply buttons ── */
+.options-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 4px 16px 6px 56px;
+    animation: slideUp 0.25s ease;
+}
+.option-btn {
+    background: #fff;
+    color: #2563eb;
+    border: 1.5px solid #2563eb;
+    border-radius: 18px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.12s;
+}
+.option-btn:hover { background: #2563eb; color: #fff; }
+.option-btn.selected { background: #2563eb; color: #fff; }
+.option-btn:disabled { cursor: default; opacity: 0.6; }
+.option-btn.done {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    border-color: transparent;
+}
+.option-btn.done:disabled { opacity: 0.4; }
+
 /* ── Input area ── */
 #input-area {
     padding: 12px 14px;
@@ -360,17 +390,70 @@ function setLoading(on) {
     document.getElementById("input").disabled = on;
 }
 
-async function sendMessage() {
-    const input = document.getElementById("input");
-    const text = input.value.trim();
-    if (!text) return;
+function clearOptions() {
+    document.querySelectorAll(".options-row").forEach(el => el.remove());
+}
 
+function renderOptions(options, type) {
+    const chatBox = document.getElementById("chat-box");
+    const row = document.createElement("div");
+    row.className = "options-row";
+
+    const selected = new Set();
+
+    function makeBtn(label, onClick) {
+        const b = document.createElement("button");
+        b.className = "option-btn";
+        b.type = "button";
+        b.innerText = label;
+        b.addEventListener("click", () => onClick(b));
+        return b;
+    }
+
+    options.forEach(opt => {
+        const btn = makeBtn(opt, (b) => {
+            if (type === "single") {
+                row.querySelectorAll(".option-btn").forEach(x => x.disabled = true);
+                b.classList.add("selected");
+                sendText(opt, true);
+            } else {
+                if (selected.has(opt)) {
+                    selected.delete(opt);
+                    b.classList.remove("selected");
+                } else {
+                    selected.add(opt);
+                    b.classList.add("selected");
+                }
+                doneBtn.disabled = selected.size === 0;
+            }
+        });
+        row.appendChild(btn);
+    });
+
+    let doneBtn;
+    if (type === "multi") {
+        doneBtn = makeBtn("Done", () => {
+            if (selected.size === 0) return;
+            row.querySelectorAll(".option-btn").forEach(x => x.disabled = true);
+            sendText(Array.from(selected).join(", "), true);
+        });
+        doneBtn.classList.add("done");
+        doneBtn.disabled = true;
+        row.appendChild(doneBtn);
+    }
+
+    chatBox.appendChild(row);
+    row.scrollIntoView({ behavior: "smooth", block: "end" });
+}
+
+async function sendText(text, fromButton) {
+    if (!text) return;
+    clearOptions();
     addMessage(text, "user");
-    input.value = "";
+    if (!fromButton) document.getElementById("input").value = "";
     setLoading(true);
 
     const typing = addTyping();
-
     try {
         const res = await fetch("/chat", {
             method: "POST",
@@ -380,13 +463,22 @@ async function sendMessage() {
         const data = await res.json();
         typing.remove();
         addMessage(data.reply, "bot");
+        if (data.options && data.options.length) {
+            renderOptions(data.options, data.options_type || "single");
+        }
     } catch {
         typing.remove();
         addMessage("Something went wrong. Please try again.", "bot");
     }
-
     setLoading(false);
-    document.getElementById("input").focus();
+    if (!fromButton) document.getElementById("input").focus();
+}
+
+async function sendMessage() {
+    const input = document.getElementById("input");
+    const text = input.value.trim();
+    if (!text) return;
+    await sendText(text, false);
 }
 
 document.getElementById("input").addEventListener("keydown", function(e) {

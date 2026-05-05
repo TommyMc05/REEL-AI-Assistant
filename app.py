@@ -477,16 +477,24 @@ def chat():
     if session["state"] == "ask_address":
         session["address"] = message
         session["state"] = "ask_urgency"
-        reply = "How urgent is it? For example — is it an emergency, needs sorting this week, or no rush?"
+        reply = "How urgent is it?"
         session["last_bot_message"] = reply
-        return jsonify({"reply": reply})
+        return jsonify({
+            "reply": reply,
+            "options": ["Emergency", "This week", "No rush"],
+            "options_type": "single"
+        })
 
     if session["state"] == "ask_urgency":
         session["urgency"] = message
         session["state"] = "ask_time"
-        reply = "And what time works best for someone to get in touch or come round? Morning, afternoon, evening — or a specific day?"
+        reply = "When works best for someone to get in touch? Pick all that apply."
         session["last_bot_message"] = reply
-        return jsonify({"reply": reply})
+        return jsonify({
+            "reply": reply,
+            "options": ["Morning", "Afternoon", "Evening", "Weekends"],
+            "options_type": "multi"
+        })
 
     if session["state"] == "ask_time":
         session["preferred_time"] = message
