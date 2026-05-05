@@ -265,7 +265,9 @@ def build_system_prompt(business, session=None):
         )
     else:
         lines.append(
-            "If someone describes an issue you can help with, give them useful information and naturally ask if they'd like someone to get in touch."
+            "If someone describes a vague problem (e.g. 'I have a problem with my sink') without saying what the issue actually is, "
+            "ask them one short clarifying question to find out — for example, is it leaking, blocked, not draining, making a noise, or something else? "
+            "Do NOT assume what the problem is. Once they describe it specifically, give helpful information and naturally ask if they'd like someone to get in touch."
         )
 
     return "\n".join(lines)
