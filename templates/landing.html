@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LeedAI — AI Receptionist for Trade Businesses</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #0f172a; }
+
+    nav { background: #0f172a; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    nav .logo { color: #fff; font-weight: 800; font-size: 20px; text-decoration: none; }
+    nav .logo span { color: #60a5fa; }
+    .nav-links { display: flex; gap: 24px; align-items: center; }
+    .nav-links a { color: #cbd5e1; text-decoration: none; font-size: 14px; }
+    .nav-links a:hover { color: #fff; }
+    .nav-cta { background: #2563eb; color: #fff !important; padding: 8px 18px; border-radius: 8px; font-weight: 600 !important; }
+    .nav-cta:hover { background: #1d4ed8 !important; }
+
+    .hero-wrap { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%); }
+    .hero { max-width: 1100px; margin: 0 auto; padding: 80px 28px; display: flex; align-items: center; gap: 60px; min-height: 560px; }
+    .hero-text { flex: 1; }
+    .hero-badge { display: inline-block; background: rgba(37,99,235,0.2); color: #93c5fd; padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-bottom: 22px; border: 1px solid rgba(37,99,235,0.3); }
+    .hero h1 { font-size: 48px; line-height: 1.1; color: #fff; font-weight: 800; margin-bottom: 20px; }
+    .hero h1 span { color: #60a5fa; }
+    .hero p { color: #94a3b8; font-size: 18px; line-height: 1.65; margin-bottom: 38px; max-width: 480px; }
+    .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; }
+    .btn-primary { background: #2563eb; color: #fff; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-ghost { background: rgba(255,255,255,0.08); color: #e2e8f0; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 16px; display: inline-block; border: 1px solid rgba(255,255,255,0.15); }
+    .btn-ghost:hover { background: rgba(255,255,255,0.13); }
+
+    .hero-demo { flex: 0 0 360px; }
+    .demo-label { color: #475569; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; text-align: center; }
+    .demo-frame { border-radius: 16px; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08); height: 480px; }
+    .demo-frame iframe { width: 100%; height: 100%; border: none; display: block; }
+    .demo-empty { background: #1e293b; display: flex; align-items: center; justify-content: center; border-radius: 16px; height: 480px; }
+    .demo-empty p { color: #475569; font-size: 14px; }
+
+    .proof-bar { background: #f8fafc; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 22px 28px; text-align: center; }
+    .proof-bar p { color: #64748b; font-size: 14px; font-weight: 500; }
+    .proof-bar strong { color: #0f172a; }
+
+    .section-wrap { max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+    .features { padding: 80px 28px; background: #fff; }
+    .section-head { text-align: center; margin-bottom: 56px; }
+    .section-head h2 { font-size: 36px; font-weight: 800; margin-bottom: 12px; }
+    .section-head p { color: #64748b; font-size: 16px; }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1000px; margin: 0 auto; }
+    .feature-card { padding: 32px 24px; border-radius: 16px; background: #f8fafc; border: 1px solid #e2e8f0; }
+    .feature-icon { width: 52px; height: 52px; background: linear-gradient(135deg, #2563eb, #1d4ed8); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 18px; }
+    .feature-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .feature-card p { color: #64748b; font-size: 14px; line-height: 1.6; }
+
+    .how { padding: 80px 28px; background: #f8fafc; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; max-width: 900px; margin: 0 auto; }
+    .step { text-align: center; }
+    .step-num { width: 48px; height: 48px; background: #2563eb; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; margin: 0 auto 18px; }
+    .step h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .step p { color: #64748b; font-size: 14px; line-height: 1.6; }
+
+    .pricing { padding: 80px 28px; background: #fff; }
+    .pricing-card { max-width: 420px; margin: 0 auto; background: linear-gradient(135deg, #0f172a, #1e3a5f); border-radius: 24px; padding: 48px; color: #fff; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.12); }
+    .plan-name { color: #93c5fd; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+    .price { font-size: 64px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+    .price sub { font-size: 26px; font-weight: 600; opacity: 0.7; vertical-align: baseline; }
+    .per { color: #94a3b8; font-size: 14px; margin-bottom: 32px; }
+    .pricing-features { list-style: none; text-align: left; margin-bottom: 36px; display: flex; flex-direction: column; gap: 12px; }
+    .pricing-features li { color: #e2e8f0; font-size: 15px; display: flex; gap: 10px; align-items: flex-start; }
+    .pricing-features li::before { content: "✓"; color: #60a5fa; font-weight: 700; flex-shrink: 0; }
+    .pricing-cta { display: block; background: #2563eb; color: #fff; padding: 16px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 16px; }
+    .pricing-cta:hover { background: #1d4ed8; }
+    .pricing-note { color: #94a3b8; font-size: 13px; text-align: center; margin-top: 16px; }
+
+    .cta-strip { background: linear-gradient(135deg, #1e3a5f, #2563eb); padding: 72px 28px; text-align: center; }
+    .cta-strip h2 { color: #fff; font-size: 36px; font-weight: 800; margin-bottom: 14px; }
+    .cta-strip p { color: #bfdbfe; font-size: 17px; margin-bottom: 36px; }
+    .btn-white { background: #fff; color: #1d4ed8; padding: 16px 36px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 17px; display: inline-block; }
+    .btn-white:hover { background: #f1f5f9; }
+
+    footer { background: #0f172a; padding: 32px 28px; text-align: center; }
+    footer p { color: #475569; font-size: 13px; }
+    footer a { color: #64748b; text-decoration: none; }
+    footer a:hover { color: #94a3b8; }
+
+    @media (max-width: 768px) {
+      .hero { flex-direction: column; padding: 48px 20px; gap: 40px; min-height: auto; }
+      .hero h1 { font-size: 32px; }
+      .hero-demo { width: 100%; flex: none; }
+      .features-grid, .steps { grid-template-columns: 1fr; }
+      .hide-mobile { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Leed<span>AI</span></a>
+  <div class="nav-links">
+    <a href="#features" class="hide-mobile">Features</a>
+    <a href="#pricing" class="hide-mobile">Pricing</a>
+    <a href="/login">Sign in</a>
+    <a href="/signup" class="nav-cta">Start Free Trial</a>
+  </div>
+</nav>
+
+<div class="hero-wrap">
+  <div class="hero">
+    <div class="hero-text">
+      <div class="hero-badge">Built for Tradespeople</div>
+      <h1>Never miss a<br><span>customer lead</span><br>again.</h1>
+      <p>LeedAI is your always-on AI receptionist. It chats with visitors on your website, qualifies their job, and emails you the lead — even at 2am when you're on another job.</p>
+      <div class="hero-ctas">
+        <a href="/signup" class="btn-primary">Start Free Trial →</a>
+        <a href="#demo" class="btn-ghost">See it live ↓</a>
+      </div>
+    </div>
+    <div class="hero-demo">
+      <p class="demo-label">Live demo — try it now</p>
+      {% if demo_id %}
+      <div class="demo-frame">
+        <iframe src="/chat-ui?business={{ demo_id }}" title="Live AI chat demo"></iframe>
+      </div>
+      {% else %}
+      <div class="demo-empty">
+        <p>Demo loading...</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="proof-bar" id="demo">
+  <div class="section-wrap">
+    <p><strong>Trusted by trade businesses</strong> across plumbing, electrical, roofing, landscaping, and more</p>
+  </div>
+</div>
+
+<div class="features" id="features">
+  <div class="section-wrap">
+    <div class="section-head">
+      <h2>Everything you need to capture every lead</h2>
+      <p>Set it up once. Let it run while you work.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">💬</div>
+        <h3>24/7 AI Chat</h3>
+        <p>Your AI receptionist answers questions, gives rough estimates, and qualifies jobs — any time of day or night.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📧</div>
+        <h3>Instant Lead Emails</h3>
+        <p>The moment someone shares their details, you get an email with their name, issue, address, and preferred contact time.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Lead Dashboard</h3>
+        <p>All your leads in one place. See who enquired, what the job is, and how urgent it is — at a glance.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎨</div>
+        <h3>Your Brand, Your Colours</h3>
+        <p>Customise the widget to match your business — colour, welcome message, and tone of voice.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💰</div>
+        <h3>Pricing Built In</h3>
+        <p>Add your jobs and price ranges. The AI gives instant ballpark estimates so customers are primed to book.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>One Line of Code</h3>
+        <p>Paste one snippet into your website and you're live. Works on WordPress, Wix, Squarespace — anything.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="how">
+  <div class="section-wrap">
+    <div class="section-head">
+      <h2>Up and running in minutes</h2>
+      <p>No technical skills needed.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Set up your profile</h3>
+        <p>Tell us your business name, trade, services, and pricing. Takes about 5 minutes.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Paste one snippet</h3>
+        <p>Copy a single line of code from your dashboard and paste it into your website. Done.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Receive leads on autopilot</h3>
+        <p>Your AI handles the chat. You get an email with every qualified lead — ready to call back.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="pricing" id="pricing">
+  <div class="section-wrap">
+    <div class="section-head">
+      <h2>Simple, honest pricing</h2>
+      <p>One plan. Everything included. Cancel any time.</p>
+    </div>
+    <div class="pricing-card">
+      <div class="plan-name">Monthly Plan</div>
+      <div class="price"><sub>£</sub>97</div>
+      <div class="per">per month &nbsp;·&nbsp; cancel any time</div>
+      <ul class="pricing-features">
+        <li>Unlimited leads captured</li>
+        <li>AI chat widget for your website</li>
+        <li>Instant email notifications</li>
+        <li>Lead tracking dashboard</li>
+        <li>Custom branding &amp; colours</li>
+        <li>Built-in pricing &amp; job estimates</li>
+        <li>One-line embed code</li>
+        <li>Email support</li>
+      </ul>
+      <a href="/signup" class="pricing-cta">Start Your Free Trial →</a>
+    </div>
+    <p class="pricing-note">14-day free trial · No credit card required to start</p>
+  </div>
+</div>
+
+<div class="cta-strip">
+  <h2>Ready to stop missing leads?</h2>
+  <p>Join trade businesses already capturing more customers with LeedAI.</p>
+  <a href="/signup" class="btn-white">Start Your Free Trial — It's Free →</a>
+</div>
+
+<footer>
+  <p>© 2025 LeedAI &nbsp;·&nbsp; <a href="/login">Client Login</a> &nbsp;·&nbsp; <a href="/admin/login">Admin</a></p>
+</footer>
+
+</body>
+</html>

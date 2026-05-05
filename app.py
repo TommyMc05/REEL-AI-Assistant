@@ -49,6 +49,142 @@ sessions = {}
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+TRADE_DEFAULTS = {
+    "plumber": {
+        "description": "Professional plumbing services for homes and businesses.",
+        "services": ["Emergency callouts", "Boiler repairs", "Leak detection", "Bathroom installation", "Drain unblocking"],
+        "pricing": {"jobs": {
+            "leak": {
+                "price": "£80–£150",
+                "keywords": ["leak", "dripping", "pipe burst", "water coming"],
+                "advice": "Turn off the stop tap to minimise damage while we get to you.",
+                "quote_notes": "Simple joint or fitting leak on the lower end. Burst pipe or hidden leak higher."
+            },
+            "boiler": {
+                "price": "£100–£300",
+                "keywords": ["boiler", "no hot water", "heating", "radiator"],
+                "advice": "Check the pressure gauge — it should sit between 1 and 1.5 bar.",
+                "quote_notes": "Service or minor repair at the lower end. Parts replacement higher."
+            },
+            "blocked_drain": {
+                "price": "£70–£120",
+                "keywords": ["blocked", "drain", "sink", "toilet blocked", "slow drain"],
+                "advice": "Avoid chemical drain cleaners as they can damage pipes.",
+                "quote_notes": ""
+            }
+        }}
+    },
+    "electrician": {
+        "description": "Qualified electrical services for homes and businesses.",
+        "services": ["Fuse board upgrades", "EV charger installation", "Lighting installation", "Socket installation", "Rewiring"],
+        "pricing": {"jobs": {
+            "fuse_board": {
+                "price": "£500–£1,200",
+                "keywords": ["fuse board", "consumer unit", "fuses", "tripping", "breaker"],
+                "advice": "Do not attempt to fix electrical faults yourself — always use a qualified electrician.",
+                "quote_notes": "Simple upgrade on the lower end. Larger boards or full rewire needed at the higher end."
+            },
+            "ev_charger": {
+                "price": "£800–£1,200",
+                "keywords": ["ev charger", "electric car", "charge point", "ev"],
+                "advice": "We install leading brands including Ohme, Zappi, and Andersen A2.",
+                "quote_notes": ""
+            },
+            "sockets": {
+                "price": "£80–£150",
+                "keywords": ["socket", "outlet", "plug", "usb port"],
+                "advice": "",
+                "quote_notes": "Per socket/double socket. Discount for multiple."
+            }
+        }}
+    },
+    "roofer": {
+        "description": "Professional roofing services including repairs, replacements, and guttering.",
+        "services": ["Roof repairs", "Full roof replacement", "Flat roofing", "Guttering", "Chimney repairs"],
+        "pricing": {"jobs": {
+            "leak": {
+                "price": "£200–£600",
+                "keywords": ["leak", "leaking roof", "water coming in", "damp ceiling"],
+                "advice": "Place a bucket under the drip and stay clear of the area until we can get out.",
+                "quote_notes": "Simple tile re-bedding on the lower end. Felt replacement or structural issue higher."
+            },
+            "tiles": {
+                "price": "£150–£400",
+                "keywords": ["tile", "slipped tile", "missing tile", "broken tile", "slate"],
+                "advice": "",
+                "quote_notes": ""
+            },
+            "gutter": {
+                "price": "£80–£200",
+                "keywords": ["gutter", "guttering", "downpipe", "overflow", "blocked gutter"],
+                "advice": "Blocked gutters should be cleared at least once a year to prevent water damage.",
+                "quote_notes": ""
+            }
+        }}
+    },
+    "gardener": {
+        "description": "Professional gardening and landscaping services.",
+        "services": ["Garden clearance", "Lawn care", "Hedge trimming", "Landscaping", "Tree surgery"],
+        "pricing": {"jobs": {
+            "lawn": {
+                "price": "£40–£120",
+                "keywords": ["lawn", "grass", "mowing", "overgrown lawn"],
+                "advice": "",
+                "quote_notes": "Depends on lawn size. Regular maintenance cheaper per visit."
+            },
+            "hedge": {
+                "price": "£60–£150",
+                "keywords": ["hedge", "trimming", "shrubs", "bushes"],
+                "advice": "",
+                "quote_notes": "Depends on hedge size and height."
+            },
+            "clearance": {
+                "price": "£150–£400",
+                "keywords": ["clearance", "waste removal", "rubbish", "clear the garden", "overgrown"],
+                "advice": "",
+                "quote_notes": "Depends on volume of waste and access."
+            }
+        }}
+    },
+    "other": {
+        "description": "Professional services for homes and businesses.",
+        "services": [],
+        "pricing": {"jobs": {}}
+    }
+}
+
+
+def make_business_id(name):
+    slug = re.sub(r'[^a-z0-9]+', '_', name.lower().strip()).strip('_')[:30]
+    if not slug:
+        slug = "business"
+    base = slug
+    i = 2
+    while get_business_config(slug):
+        slug = f"{base}_{i}"
+        i += 1
+    return slug
+
+
+def build_signup_config(business_name, trade, email):
+    defaults = TRADE_DEFAULTS.get(trade, TRADE_DEFAULTS["other"])
+    return {
+        "business_name": business_name,
+        "email": email,
+        "description": defaults["description"],
+        "contact_prompt": "someone from our team",
+        "services": defaults.get("services", []),
+        "branding": {
+            "primary_color": "#2563eb",
+            "welcome_message": f"Hi! Welcome to {business_name}. How can I help you today?",
+            "tagline": "Online now — typical reply in seconds",
+        },
+        "voice": {
+            "tone": "friendly",
+        },
+        "pricing": defaults.get("pricing", {"jobs": {}}),
+    }
+
 
 def load_business(business_id):
     """Load business config from DB (DB is the source of truth)."""
@@ -392,7 +528,49 @@ def new_session():
 
 @app.route("/")
 def home():
-    return "App running"
+    businesses = list_businesses()
+    demo_id = next((b["business_id"] for b in businesses), None)
+    return render_template("landing.html", demo_id=demo_id)
+
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if flask_session.get("client_business_id"):
+        return redirect(url_for("client_dashboard"))
+
+    error = None
+    form_data = {}
+
+    if request.method == "POST":
+        form_data = request.form.to_dict()
+        owner_name = form_data.get("owner_name", "").strip()
+        business_name = form_data.get("business_name", "").strip()
+        trade = form_data.get("trade", "other")
+        email = form_data.get("email", "").strip().lower()
+        password = form_data.get("password", "")
+
+        if not owner_name or not business_name or not email or not password:
+            error = "All fields are required."
+        elif len(password) < 6:
+            error = "Password must be at least 6 characters."
+        elif not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+            error = "Please enter a valid email address."
+        else:
+            try:
+                bid = make_business_id(business_name)
+                config = build_signup_config(business_name, trade, email)
+                create_business(bid, config)
+                set_business_credentials(bid, email, password)
+                flask_session["client_business_id"] = bid
+                return redirect(url_for("client_dashboard"))
+            except Exception as e:
+                err_str = str(e)
+                if "UNIQUE constraint" in err_str and "login_email" in err_str:
+                    error = "An account with that email already exists. Try signing in."
+                else:
+                    error = f"Could not create account: {e}"
+
+    return render_template("signup.html", error=error, form_data=form_data)
 
 
 @app.route("/test-openai")
