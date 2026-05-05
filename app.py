@@ -56,7 +56,7 @@ TRADE_DEFAULTS = {
         "pricing": {"jobs": {
             "leak": {
                 "price": "£80–£150",
-                "keywords": ["leak", "dripping", "pipe burst", "water coming"],
+                "keywords": ["water leak", "pipe leak", "dripping pipe", "pipe burst", "water coming through", "leaking pipe", "water leak"],
                 "advice": "Turn off the stop tap to minimise damage while we get to you.",
                 "quote_notes": "Simple joint or fitting leak on the lower end. Burst pipe or hidden leak higher."
             },
@@ -68,7 +68,7 @@ TRADE_DEFAULTS = {
             },
             "blocked_drain": {
                 "price": "£70–£120",
-                "keywords": ["blocked", "drain", "sink", "toilet blocked", "slow drain"],
+                "keywords": ["blocked drain", "sink blocked", "won't drain", "not draining", "slow drain", "toilet blocked", "toilet won't flush"],
                 "advice": "Avoid chemical drain cleaners as they can damage pipes.",
                 "quote_notes": ""
             }
