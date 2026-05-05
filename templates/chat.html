@@ -3,6 +3,10 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>
+:root {
+    --accent: {{ branding.primary_color }};
+    --accent-rgb: {{ branding.primary_color_rgb }};
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -29,7 +33,7 @@ body {
 #header-avatar {
     width: 44px;
     height: 44px;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background: linear-gradient(135deg, var(--accent), var(--accent));
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -39,7 +43,7 @@ body {
     color: white;
     flex-shrink: 0;
     letter-spacing: -0.5px;
-    box-shadow: 0 2px 8px rgba(37,99,235,0.5);
+    box-shadow: 0 2px 8px rgba(var(--accent-rgb),0.5);
 }
 
 #header-info h3 {
@@ -106,7 +110,7 @@ body {
 .bot-avatar {
     width: 32px;
     height: 32px;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background: linear-gradient(135deg, var(--accent), var(--accent));
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -116,7 +120,7 @@ body {
     color: white;
     flex-shrink: 0;
     margin-bottom: 18px;
-    box-shadow: 0 2px 6px rgba(37,99,235,0.3);
+    box-shadow: 0 2px 6px rgba(var(--accent-rgb),0.3);
 }
 
 .message-col {
@@ -145,10 +149,10 @@ body {
 }
 
 .message-row.user .bubble {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background: linear-gradient(135deg, var(--accent), var(--accent));
     color: white;
     border-bottom-right-radius: 5px;
-    box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+    box-shadow: 0 2px 8px rgba(var(--accent-rgb),0.3);
 }
 
 .timestamp {
@@ -204,8 +208,8 @@ body {
 }
 .option-btn {
     background: #fff;
-    color: #2563eb;
-    border: 1.5px solid #2563eb;
+    color: var(--accent);
+    border: 1.5px solid var(--accent);
     border-radius: 18px;
     padding: 8px 14px;
     font-size: 13px;
@@ -214,11 +218,11 @@ body {
     cursor: pointer;
     transition: all 0.12s;
 }
-.option-btn:hover { background: #2563eb; color: #fff; }
-.option-btn.selected { background: #2563eb; color: #fff; }
+.option-btn:hover { background: var(--accent); color: #fff; }
+.option-btn.selected { background: var(--accent); color: #fff; }
 .option-btn:disabled { cursor: default; opacity: 0.6; }
 .option-btn.done {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background: linear-gradient(135deg, var(--accent), var(--accent));
     color: #fff;
     border-color: transparent;
 }
@@ -250,9 +254,9 @@ body {
 }
 
 #input:focus {
-    border-color: #2563eb;
+    border-color: var(--accent);
     background: #fff;
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.1);
 }
 
 #input:disabled { opacity: 0.5; }
@@ -261,7 +265,7 @@ body {
     width: 42px;
     height: 42px;
     min-width: 42px;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background: linear-gradient(135deg, var(--accent), var(--accent));
     border: none;
     border-radius: 50%;
     cursor: pointer;
@@ -269,10 +273,10 @@ body {
     align-items: center;
     justify-content: center;
     transition: transform 0.12s, box-shadow 0.12s;
-    box-shadow: 0 2px 8px rgba(37,99,235,0.35);
+    box-shadow: 0 2px 8px rgba(var(--accent-rgb),0.35);
 }
 
-#send-btn:hover  { transform: scale(1.07); box-shadow: 0 4px 12px rgba(37,99,235,0.45); }
+#send-btn:hover  { transform: scale(1.07); box-shadow: 0 4px 12px rgba(var(--accent-rgb),0.45); }
 #send-btn:active { transform: scale(0.93); }
 #send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
 #send-btn svg { width: 17px; height: 17px; fill: white; }
@@ -289,7 +293,7 @@ body {
     flex-shrink: 0;
 }
 
-#footer a { color: #2563eb; text-decoration: none; font-weight: 600; }
+#footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
 #footer a:hover { text-decoration: underline; }
 </style>
 </head>
@@ -299,7 +303,7 @@ body {
     <div id="header-avatar" id="biz-initials">?</div>
     <div id="header-info">
         <h3>{{ business.business_name }}</h3>
-        <p><span class="online-dot"></span>Online now — typical reply in seconds</p>
+        <p><span class="online-dot"></span>{{ branding.tagline }}</p>
     </div>
 </div>
 

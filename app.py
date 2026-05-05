@@ -55,6 +55,27 @@ def load_business(business_id):
     return get_business_config(business_id)
 
 
+def hex_to_rgb(hex_color):
+    """Convert '#2563eb' → '37, 99, 235' for use inside rgba()."""
+    h = (hex_color or "#2563eb").lstrip("#")
+    if len(h) != 6:
+        h = "2563eb"
+    try:
+        return ", ".join(str(int(h[i:i + 2], 16)) for i in (0, 2, 4))
+    except ValueError:
+        return "37, 99, 235"
+
+
+def get_branding(business):
+    """Return branding dict with sensible defaults filled in."""
+    b = dict(business.get("branding") or {})
+    b.setdefault("primary_color", "#2563eb")
+    b.setdefault("welcome_message", f"Hi! Welcome to {business.get('business_name','')}. How can I help you today?")
+    b.setdefault("tagline", "Online now — typical reply in seconds")
+    b["primary_color_rgb"] = hex_to_rgb(b["primary_color"])
+    return b
+
+
 def build_system_prompt(business, session=None):
     lines = [f"You are a friendly assistant for {business['business_name']}."]
 
@@ -71,11 +92,31 @@ def build_system_prompt(business, session=None):
         for s in business["services"]:
             lines.append(f"- {s}")
 
+    voice = business.get("voice") or {}
+    tone = (voice.get("tone") or "friendly").lower()
+
+    if tone == "professional":
+        tone_line = "Speak in a polite, professional tone — like a senior tradesman dealing with a customer."
+    elif tone == "casual":
+        tone_line = "Speak casually and informally — like chatting with a mate. You can be a bit cheeky but never rude."
+    else:
+        tone_line = "Speak in a warm, friendly tone — natural and approachable, like a local you'd actually want to call out."
+
     lines.append(
-        "\nYou are a friendly, natural assistant — warm and conversational but always professional. "
+        f"\n{tone_line} "
         "Never sound scripted or robotic. Use natural language like a real person would, not formal corporate phrases. "
         "Keep replies concise and to the point. Show a bit of personality — be reassuring when customers have a problem."
     )
+
+    if voice.get("about"):
+        lines.append(f"\nAbout this business (use this naturally if it comes up): {voice['about']}")
+
+    if voice.get("service_area"):
+        lines.append(
+            f"\nService area: {voice['service_area']}. "
+            f"If a customer is clearly outside this area, politely let them know but still offer to take their details "
+            f"in case the team can refer them to someone."
+        )
 
     if session and session.get("offered"):
         prior_issue = session.get("issue", {}).get("job", "their issue")
@@ -394,7 +435,7 @@ def widget():
     business = load_business(business_id)
     if not business:
         return "Business not found", 404
-    return render_template("widget.html", business=business)
+    return render_template("widget.html", business=business, branding=get_branding(business))
 
 
 @app.route("/chat-ui")
@@ -405,7 +446,7 @@ def chat_ui():
     business = load_business(business_id)
     if not business:
         return "Business not found", 404
-    return render_template("chat.html", business=business)
+    return render_template("chat.html", business=business, branding=get_branding(business))
 
 
 @app.route("/init", methods=["POST"])
@@ -422,10 +463,8 @@ def init_chat():
         return jsonify({"reply": "Business not found"}), 404
 
     sessions[user_id] = new_session()
-
-    return jsonify({
-        "reply": f"Hi! Welcome to {business['business_name']}. How can I help you today?"
-    })
+    welcome = get_branding(business)["welcome_message"]
+    return jsonify({"reply": welcome})
 
 
 @app.route("/chat", methods=["POST"])
@@ -656,8 +695,21 @@ def _build_config_from_form(form):
         "email": form.get("email", "").strip(),
         "description": form.get("description", "").strip(),
         "contact_prompt": form.get("contact_prompt", "").strip() or "someone from our team",
+        "branding": {
+            "primary_color": (form.get("primary_color", "").strip() or "#2563eb"),
+            "welcome_message": form.get("welcome_message", "").strip(),
+            "tagline": form.get("tagline", "").strip() or "Online now — typical reply in seconds",
+        },
+        "voice": {
+            "tone": form.get("tone", "friendly"),
+            "about": form.get("about", "").strip(),
+            "service_area": form.get("service_area", "").strip(),
+        },
         "pricing": {"jobs": jobs}
     }
+    # Strip empty branding fields so defaults kick in cleanly
+    config["branding"] = {k: v for k, v in config["branding"].items() if v}
+    config["voice"] = {k: v for k, v in config["voice"].items() if v}
     return config
 
 
@@ -733,6 +785,8 @@ def admin_edit_business(business_id):
     jobs_pretty = json.dumps(
         config.get("pricing", {}).get("jobs", {}), indent=2, ensure_ascii=False
     )
+    branding = config.get("branding") or {}
+    voice = config.get("voice") or {}
     record = get_business_record(business_id)
     return render_template(
         "admin_business_form.html",
@@ -746,6 +800,12 @@ def admin_edit_business(business_id):
             "description": config.get("description", ""),
             "contact_prompt": config.get("contact_prompt", ""),
             "jobs_json": jobs_pretty,
+            "primary_color": branding.get("primary_color", "#2563eb"),
+            "welcome_message": branding.get("welcome_message", ""),
+            "tagline": branding.get("tagline", ""),
+            "tone": voice.get("tone", "friendly"),
+            "about": voice.get("about", ""),
+            "service_area": voice.get("service_area", ""),
         },
         login_email=record.get("login_email") if record else None,
         templates=[]

@@ -104,6 +104,53 @@ button:hover { opacity: 0.95; }
             <input type="text" name="description" value="{{ form_data.description or '' }}"
                    placeholder="One-sentence pitch — used by the AI to introduce the business">
 
+            <h3 style="margin-top:32px;font-size:15px;color:#0f172a;">Branding (make it feel like theirs)</h3>
+            <div class="row">
+                <div>
+                    <label>Brand colour</label>
+                    <input type="color" name="primary_color"
+                           value="{{ form_data.primary_color or '#2563eb' }}"
+                           style="height:46px;padding:4px 6px;cursor:pointer;">
+                    <small>Used for the chat bubble, send button, and message bubbles.</small>
+                </div>
+                <div>
+                    <label>Header tagline</label>
+                    <input type="text" name="tagline"
+                           value="{{ form_data.tagline or '' }}"
+                           placeholder="Online now — typical reply in seconds">
+                </div>
+            </div>
+
+            <label>Welcome message (the very first thing the chat says)</label>
+            <input type="text" name="welcome_message"
+                   value="{{ form_data.welcome_message or '' }}"
+                   placeholder="Hi! Welcome to ABC Plumbing — how can I help?">
+
+            <h3 style="margin-top:32px;font-size:15px;color:#0f172a;">AI voice</h3>
+            <div class="row">
+                <div>
+                    <label>Tone</label>
+                    <select name="tone">
+                        <option value="friendly" {% if form_data.tone == 'friendly' or not form_data.tone %}selected{% endif %}>Friendly</option>
+                        <option value="professional" {% if form_data.tone == 'professional' %}selected{% endif %}>Professional</option>
+                        <option value="casual" {% if form_data.tone == 'casual' %}selected{% endif %}>Casual / chatty</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Service area</label>
+                    <input type="text" name="service_area"
+                           value="{{ form_data.service_area or '' }}"
+                           placeholder="e.g. Birmingham and surrounding (B postcodes)">
+                </div>
+            </div>
+
+            <label>About this business (personality, history, specialties)</label>
+            <textarea name="about" rows="3" style="min-height:90px;"
+                      placeholder="e.g. Family business, 30 years experience. Specialise in older properties. Honest pricing — no surprise call-out fees.">{{ form_data.about or '' }}</textarea>
+            <small>Free text — the AI uses this to sound more like the actual business. Mention anything that makes them different.</small>
+
+            <h3 style="margin-top:32px;font-size:15px;color:#0f172a;">Services &amp; Pricing</h3>
+
             <label>Jobs (JSON)</label>
             <textarea id="jobs" name="jobs_json" required>{{ form_data.jobs_json or '' }}</textarea>
             <small>
