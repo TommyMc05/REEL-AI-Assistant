@@ -56,20 +56,46 @@ def build_system_prompt(business):
     return "\n".join(lines)
 
 
-def detect_issue(message, business):
+def detect_issues(message, business):
+    """Find ALL matching jobs in the message, not just the first."""
     if "pricing" not in business or "jobs" not in business.get("pricing", {}):
-        return None
+        return []
 
     msg = message.lower()
+    found = []
+    seen = set()
     for job, details in business["pricing"]["jobs"].items():
         for keyword in details.get("keywords", []):
-            if keyword in msg:
-                return {
+            if keyword in msg and job not in seen:
+                found.append({
                     "job": job,
                     "price": details["price"],
-                    "advice": details.get("advice", "")
-                }
-    return None
+                    "advice": details.get("advice", ""),
+                    "quote_notes": details.get("quote_notes", "")
+                })
+                seen.add(job)
+                break
+    return found
+
+
+def detect_issue(message, business):
+    """Returns a single combined issue covering everything detected, or None."""
+    issues = detect_issues(message, business)
+    if not issues:
+        return None
+    if len(issues) == 1:
+        return issues[0]
+
+    # Multiple issues — combine them into one
+    return {
+        "job": " and ".join(i["job"] for i in issues),
+        "price": " + ".join(i["price"] for i in issues),
+        "advice": " ".join(i["advice"] for i in issues if i["advice"]),
+        "quote_notes": "\n".join(
+            f"- {i['job']} (range {i['price']}): {i.get('quote_notes', '')}"
+            for i in issues
+        )
+    }
 
 
 def extract_contact(message):
@@ -154,14 +180,15 @@ def user_wants_contact(message, last_bot_message=""):
 
 def get_first_followup(session, business):
     """After detecting an issue, give immediate advice and ask the first follow-up question."""
+    multi = " and " in session['issue']['job']
     system = f"""You are a helpful assistant for {business['business_name']}.
 A customer said: "{session['problem_description']}"
-This seems to be a {session['issue']['job']}.
+This involves: {session['issue']['job']}.
 Immediate advice: {session['issue'].get('advice', '')}
 
 Write a short, friendly response that:
-1. Briefly gives the immediate advice in a natural way (one sentence)
-2. Asks ONE follow-up question to better understand the problem — e.g. where it is, how long it's been happening, or how bad it is.
+1. {"Acknowledge that they have multiple things going on." if multi else "Briefly gives the immediate advice in a natural way (one sentence)."}
+2. Asks ONE follow-up question to better understand the situation — e.g. where the issues are, how long it's been happening, or how bad it is.
 
 Keep it conversational and concise."""
 
@@ -224,20 +251,19 @@ def generate_quote_estimate(session, business):
 
     quote_notes = session['issue'].get('quote_notes', '')
 
+    multi = " and " in session['issue']['job']
     system = f"""You are an experienced tradesman giving a quote estimate for {business['business_name']}.
 
 Customer's problem: "{full_description}"
 Job type: {session['issue']['job']}
 Price range: {session['issue']['price']}
-{f"Pricing notes: {quote_notes}" if quote_notes else ""}
+{f"Pricing breakdown: {quote_notes}" if quote_notes else ""}
 
-Write 2-3 short sentences giving a direct estimate. Rules:
+Write 2-4 short sentences giving a direct estimate. Rules:
 - Do NOT greet the customer or say "Hi"
 - Do NOT ask any questions
-- State what the issue sounds like, give a specific price estimate, and mention one thing that could affect cost
+- {"Cover EACH job briefly with its own rough estimate, then give a combined total range." if multi else "State what the issue sounds like, give a specific price estimate, and mention one thing that could affect cost."}
 - Be direct and natural, like a tradesman texting a customer
-
-Example: Sounds like a faulty thermostat or pressure issue. Based on what you've described, I'd estimate around 110-140. If a part needs ordering it could push it a bit higher.
 """
 
     response = client.chat.completions.create(
