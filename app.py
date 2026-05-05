@@ -530,9 +530,9 @@ def new_session():
 
 @app.route("/")
 def home():
-    businesses = list_businesses()
-    demo_id = next((b["business_id"] for b in businesses if b["business_id"] == "roofer"), None)
+    demo_id = "roofer" if get_business_config("roofer") else None
     if not demo_id:
+        businesses = list_businesses()
         demo_id = next((b["business_id"] for b in businesses), None)
     return render_template("landing.html", demo_id=demo_id)
 
