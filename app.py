@@ -55,7 +55,7 @@ def load_business(business_id):
     return get_business_config(business_id)
 
 
-def build_system_prompt(business):
+def build_system_prompt(business, session=None):
     lines = [f"You are a friendly assistant for {business['business_name']}."]
 
     if "description" in business:
@@ -74,9 +74,22 @@ def build_system_prompt(business):
     lines.append(
         "\nYou are a friendly, natural assistant — warm and conversational but always professional. "
         "Never sound scripted or robotic. Use natural language like a real person would, not formal corporate phrases. "
-        "Keep replies concise and to the point. Show a bit of personality — be reassuring when customers have a problem. "
-        "If someone describes an issue you can help with, give them useful information and naturally ask if they'd like someone to get in touch."
+        "Keep replies concise and to the point. Show a bit of personality — be reassuring when customers have a problem."
     )
+
+    if session and session.get("offered"):
+        prior_issue = session.get("issue", {}).get("job", "their issue")
+        lines.append(
+            f"\nIMPORTANT CONTEXT: You have ALREADY discussed the customer's {prior_issue} and given them an estimate. "
+            f"They were ALREADY asked if they'd like to be contacted. They are now asking follow-up questions, comparing prices, "
+            f"or thinking it over. Do NOT ask them to describe their problem again. Do NOT ask 'what kind of issue do you have?'. "
+            f"Do NOT keep re-pitching the contact offer in every reply. If they say yes or agree, the system handles that automatically — "
+            f"just answer their actual question naturally."
+        )
+    else:
+        lines.append(
+            "If someone describes an issue you can help with, give them useful information and naturally ask if they'd like someone to get in touch."
+        )
 
     return "\n".join(lines)
 
@@ -305,7 +318,7 @@ def ai_reply(message, session, business):
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[{"role": "system", "content": build_system_prompt(business)}] + history[-10:],
+        messages=[{"role": "system", "content": build_system_prompt(business, session)}] + history[-10:],
         max_tokens=300,
     )
 
@@ -435,11 +448,14 @@ def chat():
     session = sessions[user_id]
 
     # Lead capture flow — these states bypass the AI entirely
-    if session["state"] == "conversation" and session["offered"] and user_wants_contact(message, session.get("last_bot_message", "")):
-        session["state"] = "ask_name"
-        reply = "Great — can I grab your name?"
-        session["last_bot_message"] = reply
-        return jsonify({"reply": reply})
+    # If we've already offered contact, a plain "yes" should always trigger lead capture,
+    # regardless of what the AI was just chatting about
+    if session["state"] == "conversation" and session["offered"]:
+        if is_yes(message) or user_wants_contact(message, session.get("offer_message", session.get("last_bot_message", ""))):
+            session["state"] = "ask_name"
+            reply = "Great — can I grab your name?"
+            session["last_bot_message"] = reply
+            return jsonify({"reply": reply})
 
     if session["state"] == "ask_name":
         session["name"] = extract_name(message)
@@ -535,13 +551,15 @@ def chat():
                 estimate = f"Usually costs around {session['issue']['price']}."
             reply = f"{estimate}\n\nWould you like {contact_prompt} to contact you to sort this out?"
             session["last_bot_message"] = reply
+            session["offer_message"] = reply  # remember the offer for later "yes" detection
             return jsonify({"reply": reply})
         else:
             session["last_bot_message"] = reply
             return jsonify({"reply": reply})
 
-    # Keyword issue detection (only in open conversation state)
-    if session["state"] == "conversation":
+    # Keyword issue detection — only fires if we haven't already gathered info on an issue.
+    # Without this guard, every mention of "leak" or "boiler" would restart the flow.
+    if session["state"] == "conversation" and not session.get("issue"):
         issue = detect_issue(message, business)
         if issue:
             session["issue"] = issue
