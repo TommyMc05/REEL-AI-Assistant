@@ -1,7 +1,8 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session as flask_session
 import json
 import os
 import re
+from functools import wraps
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -9,13 +10,26 @@ load_dotenv()
 import httpx
 from openai import OpenAI
 from email_service import send_email
+from database import init_db, get_all_leads, get_lead_stats
 
 app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "change-me-in-production").strip()
 client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY", "").strip(),
     timeout=30.0,
     http_client=httpx.Client(http2=False)
 )
+
+init_db()
+
+
+def admin_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not flask_session.get("is_admin"):
+            return redirect(url_for("admin_login"))
+        return f(*args, **kwargs)
+    return wrapper
 
 sessions = {}
 
@@ -450,6 +464,7 @@ def chat():
     if session["state"] == "ask_time":
         session["preferred_time"] = message
         send_email(
+            business_id=business_id,
             business_name=business["business_name"],
             to_email=business.get("email", ""),
             name=session["name"],
@@ -537,6 +552,73 @@ def chat():
     except Exception as e:
         print(f"[ERROR] ai_reply: {e}")
         return jsonify({"reply": "Sorry, I'm having trouble right now. Please try again in a moment."})
+
+
+# =========================
+# ADMIN ROUTES
+# =========================
+
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    error = None
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        expected = os.getenv("ADMIN_PASSWORD", "").strip()
+        if expected and password == expected:
+            flask_session["is_admin"] = True
+            return redirect(url_for("admin_dashboard"))
+        error = "Wrong password"
+    return render_template("admin_login.html", error=error)
+
+
+@app.route("/admin/logout")
+def admin_logout():
+    flask_session.pop("is_admin", None)
+    return redirect(url_for("admin_login"))
+
+
+@app.route("/admin")
+@admin_required
+def admin_dashboard():
+    stats = get_lead_stats()
+    recent = get_all_leads(limit=20)
+
+    # Decorate stats with business names from JSON files (fall back to id)
+    for s in stats:
+        b = load_business(s["business_id"])
+        if b and not s.get("business_name"):
+            s["business_name"] = b.get("business_name", s["business_id"])
+
+    # List all available business profiles
+    profiles_dir = os.path.join(BASE_DIR, "business_profiles")
+    profiles = []
+    if os.path.exists(profiles_dir):
+        for f in sorted(os.listdir(profiles_dir)):
+            if f.endswith(".json"):
+                bid = f[:-5]
+                b = load_business(bid)
+                if b:
+                    profiles.append({"id": bid, "name": b.get("business_name", bid)})
+
+    return render_template(
+        "admin_dashboard.html",
+        stats=stats,
+        recent=recent,
+        profiles=profiles
+    )
+
+
+@app.route("/admin/leads/<business_id>")
+@admin_required
+def admin_leads(business_id):
+    leads = get_all_leads(business_id=business_id, limit=500)
+    business = load_business(business_id)
+    return render_template(
+        "admin_leads.html",
+        leads=leads,
+        business_id=business_id,
+        business_name=business.get("business_name", business_id) if business else business_id
+    )
 
 
 if __name__ == "__main__":

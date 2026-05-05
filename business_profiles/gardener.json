@@ -1,0 +1,40 @@
+{
+  "business_name": "ABC Gardening",
+  "email": "m.fullerty@outlook.com",
+  "description": "Reliable garden maintenance, hedge trimming, lawn care, and full garden clearances across the local area.",
+  "contact_prompt": "one of our gardeners",
+  "pricing": {
+    "jobs": {
+      "lawn mowing": {
+        "keywords": ["lawn", "grass", "mowing", "mow", "cut grass", "lawn cut"],
+        "price": "£30–£70",
+        "advice": "If it's been a while, a one-off tidy-up first then a regular fortnightly cut keeps it neat year-round.",
+        "quote_notes": "Small front lawn is £30-40. Standard rear lawn is £45-55. Large lawn or includes edging and strimming is £60-70."
+      },
+      "hedge trimming": {
+        "keywords": ["hedge", "hedges", "trimming", "trim hedge", "overgrown hedge"],
+        "price": "£60–£200",
+        "advice": "Best done before nesting season starts (late winter/early spring) or after it ends (late summer).",
+        "quote_notes": "Small hedge or single side is £60-90. Mid-size hedge cut on top and both sides is £100-140. Large overgrown hedge needing height reduction is £160-200."
+      },
+      "garden clearance": {
+        "keywords": ["clearance", "clear garden", "overgrown", "weeds", "weeding", "tidy up", "messy garden"],
+        "price": "£120–£400",
+        "advice": "We bring all the tools and take everything away — you don't need to do anything to prep.",
+        "quote_notes": "Small garden tidy and weed is £120-160. Mid-sized clearance with green waste removal is £200-280. Heavily overgrown gardens needing multiple visits or skip hire is £350-400."
+      },
+      "lawn treatment": {
+        "keywords": ["lawn treatment", "feed", "moss", "weeds in lawn", "patchy lawn", "yellow lawn"],
+        "price": "£50–£120",
+        "advice": "Best results come from a proper feed in spring and again in autumn — moss treatment is most effective in autumn.",
+        "quote_notes": "Single feed and weed treatment is £50-70. Full scarify and aerate plus feed is £90-120."
+      },
+      "tree work": {
+        "keywords": ["tree", "trees", "branches", "tree cut", "tree removal", "stump"],
+        "price": "£150–£600",
+        "advice": "If the tree is near power lines or the road, we'll need to check if there's a Tree Preservation Order before quoting.",
+        "quote_notes": "Crown lift or light pruning of a small tree is £150-220. Larger tree reduction is £300-450. Full removal with stump grinding is £500-600."
+      }
+    }
+  }
+}

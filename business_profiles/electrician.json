@@ -1,0 +1,40 @@
+{
+  "business_name": "ABC Electrical",
+  "email": "m.fullerty@outlook.com",
+  "description": "Qualified electricians for repairs, rewiring, installations, and emergency call-outs across the local area.",
+  "contact_prompt": "one of our electricians",
+  "pricing": {
+    "jobs": {
+      "fault finding": {
+        "keywords": ["tripping", "trip switch", "fuse", "fuse box", "no power", "lights flickering", "flickering", "rcd", "breaker"],
+        "price": "£90–£180",
+        "advice": "Reset the trip switch once — if it trips again, leave it off and avoid using the affected circuit until we can take a look.",
+        "quote_notes": "Simple fault traced to a single circuit is £90-110. Multiple circuits or an intermittent fault that takes time to find is £130-160. Replacing a faulty consumer unit (fuse box) part can push it to £180."
+      },
+      "socket repair": {
+        "keywords": ["socket", "plug socket", "outlet", "wall socket", "loose socket", "broken socket"],
+        "price": "£60–£120",
+        "advice": "Avoid using the socket until it's been checked — a loose or damaged socket can be a fire risk.",
+        "quote_notes": "Replacing a single faulty socket is £60-80. Adding a new socket from an existing one is £100-120 depending on cable run."
+      },
+      "lighting installation": {
+        "keywords": ["light", "lighting", "downlights", "spotlights", "ceiling light", "pendant", "chandelier", "install light"],
+        "price": "£80–£250",
+        "advice": "Make sure to switch off the circuit at the consumer unit if you've spotted any wires hanging.",
+        "quote_notes": "Replacing an existing light fitting is £80-100. Installing a new light with cabling is £150-200. Multiple downlights in a ceiling is £200-250."
+      },
+      "rewiring": {
+        "keywords": ["rewire", "rewiring", "new wiring", "old wiring", "house rewire"],
+        "price": "£3,000–£6,500",
+        "advice": "We recommend a free survey first — pricing depends a lot on the size of the property and how much access we have.",
+        "quote_notes": "Small flat or 2-bed terrace is typically £3,000-4,000. Standard 3-bed semi is £4,500-5,500. Large detached or homes needing replastering can reach £6,500."
+      },
+      "EV charger installation": {
+        "keywords": ["ev charger", "electric car", "car charger", "ev point", "charging point"],
+        "price": "£800–£1,400",
+        "advice": "Worth checking if you qualify for a government grant — we can guide you through that during the quote.",
+        "quote_notes": "Standard 7kW charger on an exterior wall close to the consumer unit is £800-950. Longer cable runs or trenching across a driveway can push it to £1,400."
+      }
+    }
+  }
+}

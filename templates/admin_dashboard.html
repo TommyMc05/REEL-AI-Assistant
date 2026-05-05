@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LeedAI Dashboard</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f1f5f9;
+    color: #0f172a;
+    min-height: 100vh;
+}
+header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+    color: #fff;
+    padding: 18px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+header h1 { font-size: 18px; font-weight: 600; }
+header a { color: #cbd5e1; text-decoration: none; font-size: 13px; }
+header a:hover { color: #fff; }
+.container { max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
+h2 { font-size: 15px; color: #475569; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+.stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 36px; }
+.stat-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,0.08); }
+.stat-card .name { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.stat-card .id { font-size: 11px; color: #94a3b8; margin-bottom: 14px; font-family: monospace; }
+.stat-card .nums { display: flex; gap: 22px; }
+.stat-card .num { display: flex; flex-direction: column; }
+.stat-card .num strong { font-size: 22px; font-weight: 700; color: #2563eb; }
+.stat-card .num span { font-size: 11px; color: #64748b; text-transform: uppercase; }
+.empty {
+    background: #fff;
+    padding: 28px;
+    border-radius: 12px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 14px;
+}
+table {
+    width: 100%;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border-collapse: collapse;
+}
+th { background: #f8fafc; text-align: left; padding: 12px 14px; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+td { padding: 12px 14px; border-top: 1px solid #f1f5f9; font-size: 14px; }
+td.muted { color: #94a3b8; font-size: 13px; }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+.pill.ok { background: #dcfce7; color: #166534; }
+.pill.fail { background: #fee2e2; color: #991b1b; }
+.profiles { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 36px; }
+.profile-tag {
+    background: #fff;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #475569;
+    text-decoration: none;
+    border: 1px solid #e2e8f0;
+}
+.profile-tag:hover { border-color: #2563eb; color: #2563eb; }
+</style>
+</head>
+<body>
+<header>
+    <h1>LeedAI · Dashboard</h1>
+    <a href="{{ url_for('admin_logout') }}">Sign out</a>
+</header>
+
+<div class="container">
+    <h2>Leads by Business</h2>
+    {% if stats %}
+        <div class="stats">
+            {% for s in stats %}
+                <a class="stat-card" href="{{ url_for('admin_leads', business_id=s.business_id) }}">
+                    <div class="name">{{ s.business_name or s.business_id }}</div>
+                    <div class="id">{{ s.business_id }}</div>
+                    <div class="nums">
+                        <div class="num"><strong>{{ s.total }}</strong><span>Total</span></div>
+                        <div class="num"><strong>{{ s.this_week }}</strong><span>This Week</span></div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty">No leads yet — once someone completes a chat, it'll appear here.</div>
+    {% endif %}
+
+    <h2>All Business Profiles</h2>
+    <div class="profiles">
+        {% for p in profiles %}
+            <a class="profile-tag" href="{{ url_for('admin_leads', business_id=p.id) }}">{{ p.name }}</a>
+        {% endfor %}
+    </div>
+
+    <h2>Recent Leads</h2>
+    {% if recent %}
+        <table>
+            <thead>
+                <tr>
+                    <th>When</th>
+                    <th>Business</th>
+                    <th>Name</th>
+                    <th>Contact</th>
+                    <th>Issue</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in recent %}
+                <tr>
+                    <td class="muted">{{ l.created_at[:16].replace('T',' ') }}</td>
+                    <td>{{ l.business_name or l.business_id }}</td>
+                    <td>{{ l.name or '—' }}</td>
+                    <td>{{ l.contact or '—' }}</td>
+                    <td>{{ l.issue or '—' }}</td>
+                    <td>{% if l.email_sent %}<span class="pill ok">Sent</span>{% else %}<span class="pill fail">Failed</span>{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty">No leads yet.</div>
+    {% endif %}
+</div>
+</body>
+</html>
