@@ -10,7 +10,12 @@ load_dotenv()
 import httpx
 from openai import OpenAI
 from email_service import send_email
-from database import init_db, get_all_leads, get_lead_stats
+from database import (
+    init_db, get_all_leads, get_lead_stats,
+    get_business_config, get_business_record, list_businesses,
+    create_business, update_business,
+    set_business_credentials, verify_business_login
+)
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "change-me-in-production").strip()
@@ -31,17 +36,23 @@ def admin_required(f):
         return f(*args, **kwargs)
     return wrapper
 
+
+def client_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not flask_session.get("client_business_id"):
+            return redirect(url_for("client_login"))
+        return f(*args, **kwargs)
+    return wrapper
+
 sessions = {}
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def load_business(business_id):
-    path = os.path.join(BASE_DIR, "business_profiles", f"{business_id}.json")
-    if not os.path.exists(path):
-        return None
-    with open(path, encoding="utf-8") as f:
-        return json.load(f)
+    """Load business config from DB (DB is the source of truth)."""
+    return get_business_config(business_id)
 
 
 def build_system_prompt(business):
@@ -583,28 +594,17 @@ def admin_dashboard():
     stats = get_lead_stats()
     recent = get_all_leads(limit=20)
 
-    # Decorate stats with business names from JSON files (fall back to id)
     for s in stats:
         b = load_business(s["business_id"])
         if b and not s.get("business_name"):
             s["business_name"] = b.get("business_name", s["business_id"])
 
-    # List all available business profiles
-    profiles_dir = os.path.join(BASE_DIR, "business_profiles")
-    profiles = []
-    if os.path.exists(profiles_dir):
-        for f in sorted(os.listdir(profiles_dir)):
-            if f.endswith(".json"):
-                bid = f[:-5]
-                b = load_business(bid)
-                if b:
-                    profiles.append({"id": bid, "name": b.get("business_name", bid)})
-
+    businesses = list_businesses()
     return render_template(
         "admin_dashboard.html",
         stats=stats,
         recent=recent,
-        profiles=profiles
+        profiles=businesses
     )
 
 
@@ -618,6 +618,196 @@ def admin_leads(business_id):
         leads=leads,
         business_id=business_id,
         business_name=business.get("business_name", business_id) if business else business_id
+    )
+
+
+def _build_config_from_form(form):
+    """Build a business config dict from the new/edit form fields."""
+    jobs_raw = form.get("jobs_json", "").strip() or "{}"
+    jobs = json.loads(jobs_raw)  # raises ValueError if bad
+    config = {
+        "business_name": form.get("business_name", "").strip(),
+        "email": form.get("email", "").strip(),
+        "description": form.get("description", "").strip(),
+        "contact_prompt": form.get("contact_prompt", "").strip() or "someone from our team",
+        "pricing": {"jobs": jobs}
+    }
+    return config
+
+
+@app.route("/admin/business/new", methods=["GET", "POST"])
+@admin_required
+def admin_new_business():
+    error = None
+    form_data = {}
+    if request.method == "POST":
+        form_data = request.form.to_dict()
+        bid = form_data.get("business_id", "").strip().lower()
+        if not bid or not re.match(r"^[a-z0-9_]+$", bid):
+            error = "Business ID must be lowercase letters, numbers and underscores only (e.g. 'smith_plumbing')."
+        elif get_business_config(bid):
+            error = f"A business with ID '{bid}' already exists."
+        else:
+            try:
+                config = _build_config_from_form(form_data)
+                if not config["business_name"]:
+                    error = "Business name is required."
+                else:
+                    create_business(bid, config)
+                    return redirect(url_for("admin_dashboard"))
+            except json.JSONDecodeError as e:
+                error = f"The Jobs JSON isn't valid: {e}"
+            except Exception as e:
+                error = f"Could not create business: {e}"
+
+    # Provide existing businesses as templates
+    templates = []
+    for b in list_businesses():
+        cfg = get_business_config(b["business_id"])
+        if cfg:
+            templates.append({
+                "id": b["business_id"],
+                "name": b["name"],
+                "config": cfg
+            })
+
+    return render_template(
+        "admin_business_form.html",
+        mode="new",
+        error=error,
+        form_data=form_data,
+        templates=templates
+    )
+
+
+@app.route("/admin/business/<business_id>/edit", methods=["GET", "POST"])
+@admin_required
+def admin_edit_business(business_id):
+    config = get_business_config(business_id)
+    if not config:
+        return "Business not found", 404
+
+    error = None
+    if request.method == "POST":
+        form_data = request.form.to_dict()
+        try:
+            new_config = _build_config_from_form(form_data)
+            if not new_config["business_name"]:
+                error = "Business name is required."
+            else:
+                update_business(business_id, new_config)
+                return redirect(url_for("admin_dashboard"))
+        except json.JSONDecodeError as e:
+            error = f"The Jobs JSON isn't valid: {e}"
+            config = {**config, **{"business_name": form_data.get("business_name", "")}}
+        except Exception as e:
+            error = f"Could not update business: {e}"
+
+    # Pre-fill form from existing config
+    jobs_pretty = json.dumps(
+        config.get("pricing", {}).get("jobs", {}), indent=2, ensure_ascii=False
+    )
+    record = get_business_record(business_id)
+    return render_template(
+        "admin_business_form.html",
+        mode="edit",
+        error=error,
+        business_id=business_id,
+        form_data={
+            "business_id": business_id,
+            "business_name": config.get("business_name", ""),
+            "email": config.get("email", ""),
+            "description": config.get("description", ""),
+            "contact_prompt": config.get("contact_prompt", ""),
+            "jobs_json": jobs_pretty,
+        },
+        login_email=record.get("login_email") if record else None,
+        templates=[]
+    )
+
+
+@app.route("/admin/business/<business_id>/credentials", methods=["GET", "POST"])
+@admin_required
+def admin_set_credentials(business_id):
+    config = get_business_config(business_id)
+    if not config:
+        return "Business not found", 404
+
+    error = None
+    if request.method == "POST":
+        login_email = request.form.get("login_email", "").strip().lower()
+        password = request.form.get("password", "")
+        if not login_email or not password:
+            error = "Both email and password are required."
+        elif len(password) < 6:
+            error = "Password should be at least 6 characters."
+        else:
+            try:
+                set_business_credentials(business_id, login_email, password)
+                return redirect(url_for("admin_dashboard"))
+            except Exception as e:
+                error = f"Could not save credentials: {e}"
+
+    record = get_business_record(business_id)
+    return render_template(
+        "admin_credentials.html",
+        business_id=business_id,
+        business_name=config.get("business_name", business_id),
+        login_email=record.get("login_email") if record else "",
+        error=error
+    )
+
+
+# =========================
+# CLIENT ROUTES
+# =========================
+
+@app.route("/login", methods=["GET", "POST"])
+def client_login():
+    error = None
+    if request.method == "POST":
+        login_email = request.form.get("login_email", "")
+        password = request.form.get("password", "")
+        bid = verify_business_login(login_email, password)
+        if bid:
+            flask_session["client_business_id"] = bid
+            return redirect(url_for("client_dashboard"))
+        error = "Wrong email or password"
+    return render_template("client_login.html", error=error)
+
+
+@app.route("/logout")
+def client_logout():
+    flask_session.pop("client_business_id", None)
+    return redirect(url_for("client_login"))
+
+
+@app.route("/dashboard")
+@client_required
+def client_dashboard():
+    business_id = flask_session["client_business_id"]
+    business = load_business(business_id)
+    if not business:
+        flask_session.pop("client_business_id", None)
+        return redirect(url_for("client_login"))
+
+    leads = get_all_leads(business_id=business_id, limit=500)
+    stats = next((s for s in get_lead_stats() if s["business_id"] == business_id), None)
+    embed_base = request.url_root.rstrip("/")
+    embed_iframe = (
+        f'<iframe src="{embed_base}/widget?business={business_id}" '
+        f'style="position:fixed;bottom:0;right:0;width:400px;height:520px;'
+        f'border:none;z-index:9999;"></iframe>'
+    )
+
+    return render_template(
+        "client_dashboard.html",
+        business=business,
+        business_id=business_id,
+        leads=leads,
+        stats=stats,
+        embed_iframe=embed_iframe,
+        chat_url=f"{embed_base}/chat-ui?business={business_id}"
     )
 
 

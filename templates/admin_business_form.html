@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if mode == 'new' %}New Business{% else %}Edit {{ form_data.business_name }}{% endif %} — LeedAI</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f1f5f9;
+    color: #0f172a;
+    min-height: 100vh;
+}
+header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+    color: #fff;
+    padding: 18px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+header h1 { font-size: 18px; font-weight: 600; }
+header a { color: #cbd5e1; text-decoration: none; font-size: 13px; margin-left: 14px; }
+header a:hover { color: #fff; }
+.container { max-width: 800px; margin: 0 auto; padding: 28px 20px; }
+.card { background: #fff; padding: 28px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+h2 { font-size: 18px; margin-bottom: 6px; }
+p.sub { color: #64748b; font-size: 14px; margin-bottom: 22px; }
+label { display: block; font-size: 13px; color: #475569; margin: 14px 0 6px; font-weight: 600; }
+input[type=text], input[type=email], textarea, select {
+    width: 100%;
+    padding: 11px 13px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+}
+input:focus, textarea:focus, select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+textarea { font-family: 'SF Mono', Monaco, 'Courier New', monospace; min-height: 360px; resize: vertical; }
+small { color: #94a3b8; font-size: 12px; display: block; margin-top: 4px; }
+button {
+    margin-top: 22px;
+    padding: 12px 22px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+button:hover { opacity: 0.95; }
+.error { background: #fef2f2; color: #b91c1c; padding: 11px 13px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; white-space: pre-wrap; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 600px) { .row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+    <h1>{% if mode == 'new' %}+ New Business{% else %}Edit Business{% endif %}</h1>
+    <a href="{{ url_for('admin_dashboard') }}">← Dashboard</a>
+</header>
+
+<div class="container">
+    <div class="card">
+        {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+        {% if mode == 'new' and templates %}
+            <label>Start from a template (optional)</label>
+            <select id="tpl">
+                <option value="">-- Blank --</option>
+                {% for t in templates %}
+                    <option value="{{ t.id }}">{{ t.name }} ({{ t.id }})</option>
+                {% endfor %}
+            </select>
+            <small>Picks the chosen business's jobs as a starting point. You can edit anything.</small>
+        {% endif %}
+
+        <form method="post">
+            <label>Business ID (URL slug)</label>
+            <input type="text" name="business_id" value="{{ form_data.business_id or '' }}"
+                   {% if mode == 'edit' %}readonly{% endif %} placeholder="e.g. smith_plumbing" required>
+            <small>Lowercase letters, numbers and underscores. Used in the URL: /widget?business=<b>id</b></small>
+
+            <div class="row">
+                <div>
+                    <label>Business Name</label>
+                    <input type="text" name="business_name" value="{{ form_data.business_name or '' }}" required>
+                </div>
+                <div>
+                    <label>Owner Email (where leads go)</label>
+                    <input type="email" name="email" value="{{ form_data.email or '' }}">
+                </div>
+            </div>
+
+            <label>Contact prompt (used in the chat)</label>
+            <input type="text" name="contact_prompt" value="{{ form_data.contact_prompt or '' }}"
+                   placeholder="e.g. one of our plumbers">
+            <small>Replaces "{{ '{contact_prompt}' }}" in: "Would you like {{ '{contact_prompt}' }} to contact you?"</small>
+
+            <label>Description</label>
+            <input type="text" name="description" value="{{ form_data.description or '' }}"
+                   placeholder="One-sentence pitch — used by the AI to introduce the business">
+
+            <label>Jobs (JSON)</label>
+            <textarea id="jobs" name="jobs_json" required>{{ form_data.jobs_json or '' }}</textarea>
+            <small>
+                Each job has: keywords (list), price (string), advice (string), quote_notes (string).
+                Use the template dropdown above to copy from an existing business as a starting point.
+            </small>
+
+            <button type="submit">{% if mode == 'new' %}Create Business{% else %}Save Changes{% endif %}</button>
+        </form>
+    </div>
+</div>
+
+{% if mode == 'new' and templates %}
+<script>
+const TEMPLATES = {
+{% for t in templates %}
+    {{ t.id|tojson }}: {{ t.config|tojson }},
+{% endfor %}
+};
+document.getElementById('tpl').addEventListener('change', function(e) {
+    const id = e.target.value;
+    if (!id) return;
+    const cfg = TEMPLATES[id];
+    if (!cfg) return;
+    const jobs = (cfg.pricing && cfg.pricing.jobs) || {};
+    document.getElementById('jobs').value = JSON.stringify(jobs, null, 2);
+    if (!document.querySelector('[name=contact_prompt]').value) {
+        document.querySelector('[name=contact_prompt]').value = cfg.contact_prompt || '';
+    }
+    if (!document.querySelector('[name=description]').value) {
+        document.querySelector('[name=description]').value = cfg.description || '';
+    }
+});
+</script>
+{% endif %}
+
+</body>
+</html>
